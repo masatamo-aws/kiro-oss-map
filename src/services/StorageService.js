@@ -1,0 +1,277 @@
+/**
+ * Storage service for managing local data
+ */
+export class StorageService {
+  constructor() {
+    this.prefix = 'kiro-oss-map-';
+    this.isSupported = this.checkSupport();
+  }
+
+  checkSupport() {
+    try {
+      const test = 'test';
+      localStorage.setItem(test, test);
+      localStorage.removeItem(test);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  set(key, value, expiry = null) {
+    if (!this.isSupported) return false;
+
+    try {
+      const data = {
+        value,
+        timestamp: Date.now(),
+        expiry: expiry ? Date.now() + expiry : null
+      };
+
+      localStorage.setItem(this.prefix + key, JSON.stringify(data));
+      return true;
+    } catch (error) {
+      console.error('Failed to save to localStorage:', error);
+      return false;
+    }
+  }
+
+  get(key, defaultValue = null) {
+    if (!this.isSupported) return defaultValue;
+
+    try {
+      const item = localStorage.getItem(this.prefix + key);
+      if (!item) return defaultValue;
+
+      const data = JSON.parse(item);
+      
+      // Check if expired
+      if (data.expiry && Date.now() > data.expiry) {
+        this.remove(key);
+        return defaultValue;
+      }
+
+      return data.value;
+    } catch (error) {
+      console.error('Failed to read from localStorage:', error);
+      return defaultValue;
+    }
+  }
+
+  remove(key) {
+    if (!this.isSupported) return false;
+
+    try {
+      localStorage.removeItem(this.prefix + key);
+      return true;
+    } catch (error) {
+      console.error('Failed to remove from localStorage:', error);
+      return false;
+    }
+  }
+
+  clear() {
+    if (!this.isSupported) return false;
+
+    try {
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith(this.prefix)) {
+          localStorage.removeItem(key);
+        }
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to clear localStorage:', error);
+      return false;
+    }
+  }
+
+  has(key) {
+    if (!this.isSupported) return false;
+    return localStorage.getItem(this.prefix + key) !== null;
+  }
+
+  keys() {
+    if (!this.isSupported) return [];
+
+    try {
+      return Object.keys(localStorage)
+        .filter(key => key.startsWith(this.prefix))
+        .map(key => key.substring(this.prefix.length));
+    } catch (error) {
+      console.error('Failed to get keys from localStorage:', error);
+      return [];
+    }
+  }
+
+  size() {
+    return this.keys().length;
+  }
+
+  // Specific methods for common data types
+
+  setSearchHistory(history) {
+    return this.set('search-history', history, 30 * 24 * 60 * 60 * 1000); // 30 days
+  }
+
+  getSearchHistory() {
+    return this.get('search-history', []);
+  }
+
+  addToSearchHistory(query) {
+    const history = this.getSearchHistory();
+    
+    // Remove if already exists
+    const filtered = history.filter(item => item.query !== query);
+    
+    // Add to beginning
+    filtered.unshift({
+      query,
+      timestamp: Date.now()
+    });
+
+    // Keep only last 20 items
+    const trimmed = filtered.slice(0, 20);
+    
+    return this.setSearchHistory(trimmed);
+  }
+
+  setBookmarks(bookmarks) {
+    return this.set('bookmarks', bookmarks);
+  }
+
+  getBookmarks() {
+    return this.get('bookmarks', []);
+  }
+
+  addBookmark(bookmark) {
+    const bookmarks = this.getBookmarks();
+    
+    // Check if already exists
+    const exists = bookmarks.some(b => 
+      Math.abs(b.latitude - bookmark.latitude) < 0.0001 &&
+      Math.abs(b.longitude - bookmark.longitude) < 0.0001
+    );
+
+    if (!exists) {
+      bookmarks.push({
+        ...bookmark,
+        id: Date.now().toString(),
+        timestamp: Date.now()
+      });
+      
+      return this.setBookmarks(bookmarks);
+    }
+
+    return false;
+  }
+
+  removeBookmark(id) {
+    const bookmarks = this.getBookmarks();
+    const filtered = bookmarks.filter(b => b.id !== id);
+    return this.setBookmarks(filtered);
+  }
+
+  setUserPreferences(preferences) {
+    return this.set('user-preferences', preferences);
+  }
+
+  getUserPreferences() {
+    return this.get('user-preferences', {
+      units: 'metric',
+      language: 'ja',
+      defaultZoom: 10,
+      defaultCenter: [139.7671, 35.6812], // Tokyo
+      routeProfile: 'driving'
+    });
+  }
+
+  updateUserPreference(key, value) {
+    const preferences = this.getUserPreferences();
+    preferences[key] = value;
+    return this.setUserPreferences(preferences);
+  }
+
+  // Cache management for API responses
+  setCache(key, data, ttl = 5 * 60 * 1000) { // 5 minutes default
+    return this.set(`cache-${key}`, data, ttl);
+  }
+
+  getCache(key) {
+    return this.get(`cache-${key}`);
+  }
+
+  clearCache() {
+    const keys = this.keys();
+    keys.forEach(key => {
+      if (key.startsWith('cache-')) {
+        this.remove(key);
+      }
+    });
+  }
+
+  // Offline data management
+  setOfflineData(key, data) {
+    return this.set(`offline-${key}`, data);
+  }
+
+  getOfflineData(key) {
+    return this.get(`offline-${key}`);
+  }
+
+  // Storage usage information
+  getStorageUsage() {
+    if (!this.isSupported) return { used: 0, available: 0 };
+
+    try {
+      let used = 0;
+      const keys = Object.keys(localStorage);
+      
+      keys.forEach(key => {
+        if (key.startsWith(this.prefix)) {
+          used += localStorage.getItem(key).length;
+        }
+      });
+
+      // Estimate available space (localStorage typically has 5-10MB limit)
+      const estimated = 5 * 1024 * 1024; // 5MB
+      
+      return {
+        used: used,
+        available: Math.max(0, estimated - used),
+        percentage: (used / estimated) * 100
+      };
+    } catch (error) {
+      console.error('Failed to calculate storage usage:', error);
+      return { used: 0, available: 0, percentage: 0 };
+    }
+  }
+
+  // Cleanup old data
+  cleanup() {
+    const keys = this.keys();
+    let cleaned = 0;
+
+    keys.forEach(key => {
+      try {
+        const item = localStorage.getItem(this.prefix + key);
+        if (item) {
+          const data = JSON.parse(item);
+          
+          // Remove expired items
+          if (data.expiry && Date.now() > data.expiry) {
+            this.remove(key);
+            cleaned++;
+          }
+        }
+      } catch (error) {
+        // Remove corrupted items
+        this.remove(key);
+        cleaned++;
+      }
+    });
+
+    return cleaned;
+  }
+}

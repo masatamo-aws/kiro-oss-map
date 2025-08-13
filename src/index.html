@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiro OSS Map - オープンソース地図アプリ</title>
+    <meta name="description" content="OpenStreetMapを使用したオープンソース地図アプリケーション">
+    <meta name="keywords" content="地図,OpenStreetMap,ナビゲーション,経路探索">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Kiro OSS Map">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+    <link rel="apple-touch-icon" href="/icons/logo.svg">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- MapLibre GL CSS -->
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+    
+    <!-- Ensure MapLibre GL JS loads before our scripts -->
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="./styles/main.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+            <p class="text-gray-600 dark:text-gray-300">地図を読み込み中...</p>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 z-ui">
+            <div class="flex items-center justify-between px-4 py-3">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <img src="/icons/logo.svg" alt="Kiro OSS Map" class="h-8 w-8">
+                    <div class="flex items-baseline space-x-2">
+                        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Kiro OSS Map</h1>
+                        <span id="app-version" class="text-xs text-gray-500 dark:text-gray-400 font-medium">v1.0.0</span>
+                    </div>
+                </div>
+                
+                <!-- Search Box -->
+                <div class="flex-1 max-w-md mx-4">
+                    <search-box></search-box>
+                </div>
+                
+                <!-- Controls -->
+                <div class="flex items-center space-x-2">
+                    <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" title="テーマ切替">
+                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                    <button id="menu-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 md:hidden" title="メニュー">
+                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 relative">
+            <!-- Sidebar -->
+            <aside id="sidebar" class="absolute left-0 top-0 h-full w-80 bg-white dark:bg-gray-800 shadow-lg z-ui transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">検索結果</h2>
+                </div>
+                <div id="search-results" class="p-4 overflow-y-auto h-full">
+                    <p class="text-gray-500 dark:text-gray-400 text-center">場所を検索してください</p>
+                </div>
+            </aside>
+
+            <!-- Map Container -->
+            <div id="map-container" class="h-full md:ml-80">
+                <div id="map" class="w-full h-full"></div>
+                
+                <!-- Map Controls -->
+                <div class="absolute top-4 right-4 space-y-2 z-ui">
+                    <!-- Location Button -->
+                    <button id="location-btn" class="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow" title="現在地を表示">
+                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- Layer Control -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+                        <button id="layer-standard" class="block w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 bg-primary-50 dark:bg-primary-800">
+                            標準地図
+                        </button>
+                        <button id="layer-satellite" class="block w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                            衛星画像
+                        </button>
+                        <button id="layer-terrain" class="block w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                            地形図
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Route Panel -->
+                <route-panel></route-panel>
+            </div>
+        </main>
+    </div>
+
+    <!-- Share Dialog -->
+    <share-dialog></share-dialog>
+
+    <!-- Scripts -->
+    <script type="module" src="./main.js"></script>
+</body>
+</html>

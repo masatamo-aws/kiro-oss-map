@@ -1,0 +1,314 @@
+/**
+ * Search service for geocoding and POI search
+ */
+export class SearchService {
+  constructor() {
+    this.cache = new Map();
+    this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
+  }
+
+  async search(query, options = {}) {
+    const cacheKey = `search:${query}:${JSON.stringify(options)}`;
+    
+    // Check cache first
+    if (this.cache.has(cacheKey)) {
+      const cached = this.cache.get(cacheKey);
+      if (Date.now() - cached.timestamp < this.cacheTimeout) {
+        return cached.data;
+      }
+      this.cache.delete(cacheKey);
+    }
+
+    try {
+      // Use Nominatim for geocoding
+      const results = await this.searchNominatim(query, options);
+      
+      // Cache results
+      this.cache.set(cacheKey, {
+        data: results,
+        timestamp: Date.now()
+      });
+
+      return results;
+    } catch (error) {
+      console.error('Search failed:', error);
+      throw error;
+    }
+  }
+
+  async searchNominatim(query, options = {}) {
+    const params = new URLSearchParams({
+      q: query,
+      format: 'json',
+      limit: options.limit || 10,
+      addressdetails: 1,
+      extratags: 1,
+      namedetails: 1,
+      'accept-language': 'ja,en'
+    });
+
+    // Add bounding box if provided
+    if (options.bbox) {
+      params.append('viewbox', options.bbox.join(','));
+      params.append('bounded', '1');
+    }
+
+    // Add country codes if provided
+    if (options.countrycodes) {
+      params.append('countrycodes', options.countrycodes.join(','));
+    }
+
+    const url = `https://nominatim.openstreetmap.org/search?${params}`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Kiro OSS Map/1.0'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Nominatim API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    return data.map(item => ({
+      id: item.place_id,
+      name: item.display_name.split(',')[0],
+      displayName: item.display_name,
+      latitude: parseFloat(item.lat),
+      longitude: parseFloat(item.lon),
+      address: this.parseAddress(item.address),
+      category: this.parseCategory(item),
+      importance: parseFloat(item.importance) || 0,
+      boundingBox: item.boundingbox ? {
+        north: parseFloat(item.boundingbox[1]),
+        south: parseFloat(item.boundingbox[0]),
+        east: parseFloat(item.boundingbox[3]),
+        west: parseFloat(item.boundingbox[2])
+      } : null,
+      type: item.type,
+      class: item.class
+    }));
+  }
+
+  async reverseGeocode(latitude, longitude, options = {}) {
+    const cacheKey = `reverse:${latitude}:${longitude}`;
+    
+    // Check cache first
+    if (this.cache.has(cacheKey)) {
+      const cached = this.cache.get(cacheKey);
+      if (Date.now() - cached.timestamp < this.cacheTimeout) {
+        return cached.data;
+      }
+      this.cache.delete(cacheKey);
+    }
+
+    try {
+      const params = new URLSearchParams({
+        lat: latitude,
+        lon: longitude,
+        format: 'json',
+        addressdetails: 1,
+        zoom: options.zoom || 18,
+        'accept-language': 'ja,en'
+      });
+
+      const url = `https://nominatim.openstreetmap.org/reverse?${params}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Kiro OSS Map/1.0'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Nominatim API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      const result = {
+        name: data.display_name.split(',')[0],
+        displayName: data.display_name,
+        latitude: parseFloat(data.lat),
+        longitude: parseFloat(data.lon),
+        address: this.parseAddress(data.address),
+        category: this.parseCategory(data),
+        type: data.type,
+        class: data.class
+      };
+
+      // Cache result
+      this.cache.set(cacheKey, {
+        data: result,
+        timestamp: Date.now()
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Reverse geocoding failed:', error);
+      throw error;
+    }
+  }
+
+  async searchPOI(query, category = null, bbox = null, options = {}) {
+    try {
+      // Build Overpass query for POI search
+      const overpassQuery = this.buildOverpassQuery(query, category, bbox, options);
+      
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `data=${encodeURIComponent(overpassQuery)}`
+      });
+
+      if (!response.ok) {
+        throw new Error(`Overpass API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      return this.parseOverpassResults(data);
+    } catch (error) {
+      console.error('POI search failed:', error);
+      // Fallback to regular search
+      return this.search(query, options);
+    }
+  }
+
+  buildOverpassQuery(query, category, bbox, options) {
+    const limit = options.limit || 50;
+    const timeout = options.timeout || 25;
+    
+    let bboxStr = '';
+    if (bbox) {
+      bboxStr = `(${bbox.south},${bbox.west},${bbox.north},${bbox.east})`;
+    }
+
+    let categoryFilter = '';
+    if (category) {
+      const categoryMap = {
+        restaurant: 'amenity~"restaurant|cafe|fast_food"',
+        hospital: 'amenity~"hospital|clinic|pharmacy"',
+        atm: 'amenity~"atm|bank"',
+        gas_station: 'amenity="fuel"',
+        hotel: 'tourism~"hotel|guest_house"',
+        shop: 'shop',
+        school: 'amenity~"school|university|college"'
+      };
+      categoryFilter = categoryMap[category] || `amenity="${category}"`;
+    }
+
+    const queryFilter = query ? `["name"~"${query}",i]` : '';
+    
+    return `
+      [out:json][timeout:${timeout}];
+      (
+        node[${categoryFilter}]${queryFilter}${bboxStr};
+        way[${categoryFilter}]${queryFilter}${bboxStr};
+        relation[${categoryFilter}]${queryFilter}${bboxStr};
+      );
+      out center ${limit};
+    `;
+  }
+
+  parseOverpassResults(data) {
+    return data.elements.map(element => {
+      const lat = element.lat || (element.center && element.center.lat);
+      const lon = element.lon || (element.center && element.center.lon);
+      
+      return {
+        id: `osm-${element.type}-${element.id}`,
+        name: element.tags.name || element.tags.brand || 'Unknown',
+        displayName: this.buildDisplayName(element.tags),
+        latitude: lat,
+        longitude: lon,
+        address: this.buildAddressFromTags(element.tags),
+        category: this.getCategoryFromTags(element.tags),
+        tags: element.tags,
+        type: element.type,
+        osmId: element.id
+      };
+    }).filter(item => item.latitude && item.longitude);
+  }
+
+  parseAddress(address) {
+    if (!address) return '';
+    
+    const parts = [];
+    if (address.house_number) parts.push(address.house_number);
+    if (address.road) parts.push(address.road);
+    if (address.suburb) parts.push(address.suburb);
+    if (address.city || address.town || address.village) {
+      parts.push(address.city || address.town || address.village);
+    }
+    if (address.state) parts.push(address.state);
+    if (address.country) parts.push(address.country);
+    
+    return parts.join(', ');
+  }
+
+  parseCategory(item) {
+    const categoryMap = {
+      amenity: {
+        restaurant: 'レストラン',
+        cafe: 'カフェ',
+        hospital: '病院',
+        school: '学校',
+        bank: '銀行',
+        atm: 'ATM',
+        fuel: 'ガソリンスタンド'
+      },
+      shop: {
+        supermarket: 'スーパーマーケット',
+        convenience: 'コンビニ',
+        clothes: '衣料品店'
+      },
+      tourism: {
+        hotel: 'ホテル',
+        attraction: '観光地'
+      }
+    };
+
+    if (item.class && item.type) {
+      return categoryMap[item.class]?.[item.type] || item.type;
+    }
+    
+    return item.category || '';
+  }
+
+  buildDisplayName(tags) {
+    const parts = [];
+    if (tags.name) parts.push(tags.name);
+    if (tags['addr:housenumber']) parts.push(tags['addr:housenumber']);
+    if (tags['addr:street']) parts.push(tags['addr:street']);
+    if (tags['addr:city']) parts.push(tags['addr:city']);
+    
+    return parts.join(', ');
+  }
+
+  buildAddressFromTags(tags) {
+    const parts = [];
+    if (tags['addr:housenumber']) parts.push(tags['addr:housenumber']);
+    if (tags['addr:street']) parts.push(tags['addr:street']);
+    if (tags['addr:city']) parts.push(tags['addr:city']);
+    if (tags['addr:postcode']) parts.push(tags['addr:postcode']);
+    
+    return parts.join(', ');
+  }
+
+  getCategoryFromTags(tags) {
+    if (tags.amenity) return tags.amenity;
+    if (tags.shop) return tags.shop;
+    if (tags.tourism) return tags.tourism;
+    if (tags.leisure) return tags.leisure;
+    return 'other';
+  }
+
+  clearCache() {
+    this.cache.clear();
+  }
+}
