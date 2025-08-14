@@ -1319,7 +1319,54 @@ services:
 
 ---
 
-**文書バージョン**: 2.0  
+## 9. GitHubリポジトリ仕様（v1.0.1）
+
+### 9.1 リポジトリ構造
+```
+masatamo-aws/kiro-oss-map/
+├── README.md                    # プロジェクト概要・セットアップ
+├── CHANGELOG.md                 # 変更履歴
+├── LICENSE                      # MITライセンス
+├── package.json                 # 依存関係・スクリプト
+├── docker-compose.yml           # Docker設定
+├── src/                         # フロントエンドソース
+├── server/                      # バックエンドソース
+├── assets/                      # 画像・アセット
+├── tests/                       # テストファイル
+└── docs/                        # 技術ドキュメント
+    ├── requirements.md
+    ├── specifications.md
+    ├── design.md
+    ├── tasks.md
+    └── logicalarchitecture.md
+```
+
+### 9.2 CI/CD仕様（計画）
+```yaml
+# .github/workflows/ci.yml
+name: CI/CD Pipeline
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+```
+
+### 9.3 リリース管理
+- **セマンティックバージョニング**: MAJOR.MINOR.PATCH
+- **自動リリースノート**: GitHub Releases連携
+- **タグ管理**: git tag による版数管理
+- **ブランチ戦略**: main ブランチ中心の単純構成
+
+---
+
+**文書バージョン**: 2.1  
 **作成日**: 2025年8月13日  
 **最終更新**: 2025年8月13日  
-**実装バージョン**: v1.0.0
+**実装バージョン**: v1.0.1  
+**GitHubリポジトリ**: https://github.com/masatamo-aws/kiro-oss-map

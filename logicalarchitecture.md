@@ -431,10 +431,121 @@ graph TB
 
 ---
 
-**文書バージョン**: 2.0  
+## 9. GitHubリポジトリアーキテクチャ（v1.0.1）
+
+```mermaid
+graph TB
+    subgraph "GitHub Repository - 公開完了"
+        REPO[masatamo-aws/kiro-oss-map<br/>MIT License]
+        MAIN[main branch<br/>v1.0.1]
+        RELEASES[GitHub Releases<br/>セマンティックバージョニング]
+    end
+    
+    subgraph "Community Features - 実装完了"
+        ISSUES[GitHub Issues<br/>バグレポート・機能要望]
+        DISCUSSIONS[GitHub Discussions<br/>技術相談・質問]
+        WIKI[GitHub Wiki<br/>詳細ドキュメント]
+        PROJECTS[GitHub Projects<br/>ロードマップ管理]
+    end
+    
+    subgraph "CI/CD Pipeline - 計画中"
+        ACTIONS[GitHub Actions<br/>自動テスト・ビルド]
+        DEPENDABOT[Dependabot<br/>依存関係更新]
+        SECURITY[Security Advisories<br/>脆弱性管理]
+    end
+    
+    subgraph "Documentation - 完了"
+        README[README.md<br/>プロジェクト概要]
+        CHANGELOG_DOC[CHANGELOG.md<br/>変更履歴]
+        SPECS[Technical Specs<br/>技術仕様書]
+        DESIGN_DOC[Design Docs<br/>設計書]
+    end
+    
+    REPO --> MAIN
+    MAIN --> RELEASES
+    
+    REPO --> ISSUES
+    REPO --> DISCUSSIONS
+    REPO --> WIKI
+    REPO --> PROJECTS
+    
+    REPO --> ACTIONS
+    REPO --> DEPENDABOT
+    REPO --> SECURITY
+    
+    MAIN --> README
+    MAIN --> CHANGELOG_DOC
+    MAIN --> SPECS
+    MAIN --> DESIGN_DOC
+```
+
+## 10. オープンソースエコシステム
+
+```mermaid
+graph LR
+    subgraph "Kiro OSS Map Ecosystem"
+        CORE[Core Application<br/>v1.0.1]
+        DOCS[Documentation<br/>完全版]
+        COMMUNITY[Community<br/>GitHub中心]
+    end
+    
+    subgraph "External Dependencies"
+        MAPLIBRE[MapLibre GL JS<br/>地図エンジン]
+        NOMINATIM[Nominatim<br/>ジオコーディング]
+        OSRM[OSRM<br/>ルーティング]
+        OSM[OpenStreetMap<br/>地図データ]
+    end
+    
+    subgraph "Development Tools"
+        VITE[Vite<br/>ビルドツール]
+        DOCKER[Docker<br/>コンテナ化]
+        NODE[Node.js<br/>ランタイム]
+    end
+    
+    CORE --> MAPLIBRE
+    CORE --> NOMINATIM
+    CORE --> OSRM
+    CORE --> OSM
+    
+    CORE --> VITE
+    CORE --> DOCKER
+    CORE --> NODE
+    
+    DOCS --> COMMUNITY
+    COMMUNITY --> CORE
+```
+
+---
+
+## 実装完了サマリー（v1.0.1）
+
+### ✅ 完了済みアーキテクチャ要素
+
+#### GitHubリポジトリ
+- **公開リポジトリ**: https://github.com/masatamo-aws/kiro-oss-map
+- **ライセンス**: MIT License
+- **初回コミット**: d3790d4 (50ファイル、25,127行)
+- **最新リリース**: v1.0.1
+
+#### コミュニティ機能
+- **Issue管理**: バグレポート・機能要望受付体制
+- **Discussion**: 技術相談・質問対応
+- **Documentation**: 包括的技術ドキュメント
+- **Contributing**: オープンソース貢献ガイドライン
+
+#### 継続的改善
+- **バージョン管理**: セマンティックバージョニング
+- **リリース管理**: GitHub Releases
+- **ドキュメント管理**: 継続的更新体制
+- **コミュニティ対応**: Issue・PR管理
+
+---
+
+**文書バージョン**: 2.1  
 **作成日**: 2025年8月13日  
 **最終更新**: 2025年8月13日  
-**実装状況**: v1.0.0 完了 - 2025年8月13日
+**実装状況**: v1.0.1 完了・GitHub公開済み - 2025年8月13日  
+**GitHubリポジトリ**: https://github.com/masatamo-aws/kiro-oss-map
     MOB --> CDN
     CDN --> CACHE
     CACHE --> LB

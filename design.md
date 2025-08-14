@@ -496,10 +496,77 @@ jobs:
 
 ---
 
-**文書バージョン**: 2.0  
+## 9. オープンソース公開設計（v1.0.1）
+
+### 9.1 GitHubリポジトリ設計
+```
+Repository Design:
+├── Public Repository (MIT License)
+├── Issue Templates (Bug Report / Feature Request)
+├── Pull Request Templates
+├── Contributing Guidelines
+├── Code of Conduct
+└── Security Policy
+```
+
+### 9.2 コミュニティ設計
+```javascript
+// コミュニティ参加設計
+const CommunityDesign = {
+  contribution: {
+    codeContribution: 'Pull Request歓迎',
+    documentation: 'ドキュメント改善歓迎',
+    translation: '多言語対応協力歓迎',
+    testing: 'バグレポート・テスト協力歓迎'
+  },
+  
+  support: {
+    issues: 'GitHub Issues',
+    discussions: 'GitHub Discussions', 
+    documentation: '包括的README・Wiki',
+    examples: 'サンプルコード・デモ'
+  },
+  
+  governance: {
+    maintainer: 'masatamo-aws',
+    license: 'MIT License',
+    versioning: 'Semantic Versioning',
+    releases: 'GitHub Releases'
+  }
+};
+```
+
+### 9.3 継続的改善設計
+```javascript
+// 継続的改善プロセス
+const ContinuousImprovement = {
+  feedback: {
+    userFeedback: 'GitHub Issues・Discussions',
+    analytics: 'GitHub Insights・Stars・Forks',
+    monitoring: 'Issue・PR追跡'
+  },
+  
+  development: {
+    roadmap: 'GitHub Projects・Milestones',
+    releases: '定期リリース（月次予定）',
+    documentation: '継続的ドキュメント更新'
+  },
+  
+  quality: {
+    codeReview: 'Pull Request Review',
+    testing: '自動テスト・手動テスト',
+    security: 'Dependabot・Security Advisories'
+  }
+};
+```
+
+---
+
+**文書バージョン**: 2.1  
 **作成日**: 2025年8月13日  
 **最終更新**: 2025年8月13日  
-**実装状況**: v1.0.0 完了 - 2025年8月13日
+**実装状況**: v1.0.1 完了・GitHub公開済み - 2025年8月13日  
+**GitHubリポジトリ**: https://github.com/masatamo-aws/kiro-oss-map
 
 ### 2.3 状態管理設計
 

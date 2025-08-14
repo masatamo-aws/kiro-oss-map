@@ -1,12 +1,14 @@
-# Kiro OSS Map v1.0.0
+# Kiro OSS Map v1.0.1
 
 🗺️ **オープンソース地図Webアプリケーション** - OpenStreetMapを使用したGoogle Maps風の地図サービス
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.17.0-brightgreen)](https://nodejs.org/)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/kiro-oss/kiro-oss-map)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/masatamo-aws/kiro-oss-map)
+[![GitHub Release](https://img.shields.io/badge/release-v1.0.1-blue)](https://github.com/masatamo-aws/kiro-oss-map/releases)
+[![GitHub Stars](https://img.shields.io/github/stars/masatamo-aws/kiro-oss-map)](https://github.com/masatamo-aws/kiro-oss-map)
 
-> **🚀 5分で起動可能** | **📱 モバイル対応** | **🌙 ダークモード** | **🔍 高速検索** | **🛣️ ルート案内**
+> **🚀 5分で起動可能** | **📱 モバイル対応** | **🌙 ダークモード** | **🔍 高速検索** | **🛣️ ルート案内** | **🌐 GitHub公開済み**
 
 ## 🌟 特徴
 
@@ -24,7 +26,7 @@ OpenStreetMapベースの詳細な地図表示。検索機能、現在地表示�
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/masatamo-aws/kiro-oss-map/main/assets/image/Standard%20Map.png" alt="Kiro OSS Map - 標準地図表示" width="800">
-  <p><em>標準地図モード - 東京駅周辺の表示例</em></p>
+  <p><em>標準地図モード - 目黒駅周辺の表示例</em></p>
 </div>
 
 ### 🛰️ 衛星画像表示
@@ -96,7 +98,7 @@ OpenStreetMapベースの詳細な地図表示。検索機能、現在地表示�
 #### 1️⃣ プロジェクトの取得
 ```bash
 # リポジトリをクローン
-git clone https://github.com/kiro-oss/kiro-oss-map.git
+git clone https://github.com/masatamo-aws/kiro-oss-map.git
 cd kiro-oss-map
 ```
 
@@ -152,7 +154,7 @@ npx vite --host 0.0.0.0 --port 3000
 brew install node
 
 # プロジェクトセットアップ
-git clone https://github.com/kiro-oss/kiro-oss-map.git
+git clone https://github.com/masatamo-aws/kiro-oss-map.git
 cd kiro-oss-map
 npm install
 npm run dev
@@ -167,7 +169,7 @@ curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 # プロジェクトセットアップ
-git clone https://github.com/kiro-oss/kiro-oss-map.git
+git clone https://github.com/masatamo-aws/kiro-oss-map.git
 cd kiro-oss-map
 npm install
 npm run dev
@@ -180,7 +182,7 @@ curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
 sudo yum install -y nodejs
 
 # プロジェクトセットアップ
-git clone https://github.com/kiro-oss/kiro-oss-map.git
+git clone https://github.com/masatamo-aws/kiro-oss-map.git
 cd kiro-oss-map
 npm install
 npm run dev
@@ -362,7 +364,7 @@ cd ..
 rm -rf kiro-oss-map
 
 # 2. 再度クローンからやり直し
-git clone https://github.com/kiro-oss/kiro-oss-map.git
+git clone https://github.com/masatamo-aws/kiro-oss-map.git
 cd kiro-oss-map
 npm install
 npm run dev
@@ -372,8 +374,8 @@ npm run dev
 
 解決しない場合は以下にお問い合わせください：
 
-- 🐛 **バグレポート**: [GitHub Issues](https://github.com/kiro-oss/kiro-oss-map/issues)
-- 💬 **質問・相談**: [GitHub Discussions](https://github.com/kiro-oss/kiro-oss-map/discussions)
+- 🐛 **バグレポート**: [GitHub Issues](https://github.com/masatamo-aws/kiro-oss-map/issues)
+- 💬 **質問・相談**: [GitHub Discussions](https://github.com/masatamo-aws/kiro-oss-map/discussions)
 - 📧 **直接お問い合わせ**: support@kiro-oss-map.org
 
 **お問い合わせ時に含めていただきたい情報:**
@@ -623,8 +625,8 @@ const corsOptions = {
 3. **地図が表示されない**: ブラウザのJavaScriptが有効か確認
 
 #### サポート窓口
-- 🐛 **バグレポート**: [GitHub Issues](https://github.com/kiro-oss/kiro-oss-map/issues)
-- 💡 **機能要望**: [GitHub Discussions](https://github.com/kiro-oss/kiro-oss-map/discussions)
+- 🐛 **バグレポート**: [GitHub Issues](https://github.com/masatamo-aws/kiro-oss-map/issues)
+- 💡 **機能要望**: [GitHub Discussions](https://github.com/masatamo-aws/kiro-oss-map/discussions)
 - 📧 **お問い合わせ**: support@kiro-oss-map.org
 
 ## 🔧 設定
@@ -1097,8 +1099,8 @@ MIT License - 詳細は [LICENSE](./LICENSE) ファイルを参照
 
 ## 📞 サポート
 
-- 🐛 バグレポート: [Issues](https://github.com/kiro-oss/kiro-oss-map/issues)
-- 💡 機能要望: [Discussions](https://github.com/kiro-oss/kiro-oss-map/discussions)
+- 🐛 バグレポート: [Issues](https://github.com/masatamo-aws/kiro-oss-map/issues)
+- 💡 機能要望: [Discussions](https://github.com/masatamo-aws/kiro-oss-map/discussions)
 - 📧 お問い合わせ: support@kiro-oss-map.org
 
 ## 🗺️ ロードマップ
