@@ -44,7 +44,8 @@ export class SearchService {
       addressdetails: 1,
       extratags: 1,
       namedetails: 1,
-      'accept-language': 'ja,en'
+      'accept-language': 'ja,en',
+      countrycodes: options.countrycodes || 'jp'
     });
 
     // Add bounding box if provided
@@ -53,104 +54,40 @@ export class SearchService {
       params.append('bounded', '1');
     }
 
-    // Add country codes if provided
-    if (options.countrycodes) {
-      params.append('countrycodes', options.countrycodes.join(','));
-    }
-
     const url = `https://nominatim.openstreetmap.org/search?${params}`;
     
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Kiro OSS Map/1.0'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Nominatim API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    return data.map(item => ({
-      id: item.place_id,
-      name: item.display_name.split(',')[0],
-      displayName: item.display_name,
-      latitude: parseFloat(item.lat),
-      longitude: parseFloat(item.lon),
-      address: this.parseAddress(item.address),
-      category: this.parseCategory(item),
-      importance: parseFloat(item.importance) || 0,
-      boundingBox: item.boundingbox ? {
-        north: parseFloat(item.boundingbox[1]),
-        south: parseFloat(item.boundingbox[0]),
-        east: parseFloat(item.boundingbox[3]),
-        west: parseFloat(item.boundingbox[2])
-      } : null,
-      type: item.type,
-      class: item.class
-    }));
-  }
-
-  async reverseGeocode(latitude, longitude, options = {}) {
-    const cacheKey = `reverse:${latitude}:${longitude}`;
-    
-    // Check cache first
-    if (this.cache.has(cacheKey)) {
-      const cached = this.cache.get(cacheKey);
-      if (Date.now() - cached.timestamp < this.cacheTimeout) {
-        return cached.data;
-      }
-      this.cache.delete(cacheKey);
-    }
-
     try {
-      const params = new URLSearchParams({
-        lat: latitude,
-        lon: longitude,
-        format: 'json',
-        addressdetails: 1,
-        zoom: options.zoom || 18,
-        'accept-language': 'ja,en'
-      });
-
-      const url = `https://nominatim.openstreetmap.org/reverse?${params}`;
-      
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'Kiro OSS Map/1.0'
+          'User-Agent': 'Kiro OSS Map/1.1.0'
         }
       });
 
       if (!response.ok) {
-        throw new Error(`Nominatim API error: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       
-      const result = {
-        name: data.display_name.split(',')[0],
-        displayName: data.display_name,
-        latitude: parseFloat(data.lat),
-        longitude: parseFloat(data.lon),
-        address: this.parseAddress(data.address),
-        category: this.parseCategory(data),
-        type: data.type,
-        class: data.class
-      };
-
-      // Cache result
-      this.cache.set(cacheKey, {
-        data: result,
-        timestamp: Date.now()
-      });
-
-      return result;
+      return data.map(item => ({
+        id: item.place_id,
+        name: item.display_name,
+        lat: parseFloat(item.lat),
+        lng: parseFloat(item.lon),
+        type: item.type,
+        category: item.class,
+        address: item.address,
+        boundingbox: item.boundingbox,
+        importance: item.importance || 0
+      }));
     } catch (error) {
-      console.error('Reverse geocoding failed:', error);
-      throw error;
+      console.error('Nominatim search failed:', error);
+      throw new Error('検索サービスに接続できませんでした');
     }
+
   }
+
+
 
   async searchPOI(query, category = null, bbox = null, options = {}) {
     try {
@@ -306,6 +243,41 @@ export class SearchService {
     if (tags.tourism) return tags.tourism;
     if (tags.leisure) return tags.leisure;
     return 'other';
+  }
+
+  async getSuggestions(query, options = {}) {
+    if (!query || query.length < 2) {
+      return [];
+    }
+
+    const cacheKey = `suggestions:${query}`;
+    
+    // Check cache first
+    if (this.cache.has(cacheKey)) {
+      const cached = this.cache.get(cacheKey);
+      if (Date.now() - cached.timestamp < this.cacheTimeout) {
+        return cached.data;
+      }
+      this.cache.delete(cacheKey);
+    }
+
+    try {
+      const results = await this.searchNominatim(query, {
+        ...options,
+        limit: 5
+      });
+
+      // Cache suggestions
+      this.cache.set(cacheKey, {
+        data: results,
+        timestamp: Date.now()
+      });
+
+      return results;
+    } catch (error) {
+      console.error('Suggestions failed:', error);
+      return [];
+    }
   }
 
   clearCache() {

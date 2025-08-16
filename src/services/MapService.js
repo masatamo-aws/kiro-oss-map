@@ -164,6 +164,168 @@ export class MapService {
         zoom: this.map.getZoom()
       });
     });
+
+    // Keyboard navigation
+    this.setupKeyboardNavigation();
+  }
+
+  setupKeyboardNavigation() {
+    let mapFocused = false;
+
+    // Make map container focusable
+    const mapContainer = this.map.getContainer();
+    mapContainer.setAttribute('tabindex', '0');
+    mapContainer.setAttribute('role', 'application');
+    mapContainer.setAttribute('aria-label', '地図 - 矢印キーで移動、+/-キーでズーム');
+
+    // Focus events
+    mapContainer.addEventListener('focus', () => {
+      mapFocused = true;
+      mapContainer.style.outline = '2px solid #3b82f6';
+      mapContainer.style.outlineOffset = '2px';
+    });
+
+    mapContainer.addEventListener('blur', () => {
+      mapFocused = false;
+      mapContainer.style.outline = 'none';
+    });
+
+    // Keyboard events
+    document.addEventListener('keydown', (e) => {
+      if (!mapFocused || !this.isInitialized) return;
+
+      const panDistance = 50; // pixels
+      const center = this.map.getCenter();
+      const zoom = this.map.getZoom();
+      let handled = false;
+
+      switch (e.key) {
+        case 'ArrowUp':
+          this.map.panBy([0, -panDistance]);
+          handled = true;
+          break;
+        case 'ArrowDown':
+          this.map.panBy([0, panDistance]);
+          handled = true;
+          break;
+        case 'ArrowLeft':
+          this.map.panBy([-panDistance, 0]);
+          handled = true;
+          break;
+        case 'ArrowRight':
+          this.map.panBy([panDistance, 0]);
+          handled = true;
+          break;
+        case '+':
+        case '=':
+          this.map.zoomIn();
+          handled = true;
+          break;
+        case '-':
+          this.map.zoomOut();
+          handled = true;
+          break;
+        case 'Home':
+          // Reset to default view
+          this.flyTo([139.7671, 35.6812], 10);
+          handled = true;
+          break;
+        case 'Enter':
+        case ' ':
+          // Add marker at center
+          this.addMarker([center.lng, center.lat], 'キーボードで追加', null, {
+            className: 'keyboard-marker'
+          });
+          handled = true;
+          break;
+      }
+
+      if (handled) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
+
+    // Add keyboard navigation help
+    this.addKeyboardHelp();
+  }
+
+  addKeyboardHelp() {
+    const helpButton = document.createElement('button');
+    helpButton.className = 'keyboard-help-btn fixed bottom-4 left-4 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 z-30';
+    helpButton.title = 'キーボード操作ヘルプ';
+    helpButton.innerHTML = `
+      <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+      </svg>
+    `;
+
+    helpButton.addEventListener('click', () => {
+      this.showKeyboardHelp();
+    });
+
+    document.body.appendChild(helpButton);
+  }
+
+  showKeyboardHelp() {
+    const helpDialog = document.createElement('div');
+    helpDialog.className = 'keyboard-help-dialog fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+    helpDialog.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md mx-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white">キーボード操作</h3>
+          <button class="close-help text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">矢印キー</span>
+            <span class="text-gray-900 dark:text-white">地図を移動</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">+ / -</span>
+            <span class="text-gray-900 dark:text-white">ズームイン/アウト</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Home</span>
+            <span class="text-gray-900 dark:text-white">初期位置に戻る</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Enter / Space</span>
+            <span class="text-gray-900 dark:text-white">中央にマーカー追加</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Tab</span>
+            <span class="text-gray-900 dark:text-white">地図にフォーカス</span>
+          </div>
+        </div>
+        
+        <div class="mt-6 text-center">
+          <button class="close-help bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors">
+            閉じる
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(helpDialog);
+
+    // Close dialog
+    helpDialog.querySelectorAll('.close-help').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.body.removeChild(helpDialog);
+      });
+    });
+
+    helpDialog.addEventListener('click', (e) => {
+      if (e.target === helpDialog) {
+        document.body.removeChild(helpDialog);
+      }
+    });
   }
 
   setStyle(styleName) {
@@ -496,6 +658,10 @@ export class MapService {
 
   getCenter() {
     return this.isInitialized ? this.map.getCenter() : null;
+  }
+
+  getZoom() {
+    return this.isInitialized ? this.map.getZoom() : null;
   }
 
   getZoom() {

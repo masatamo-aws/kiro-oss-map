@@ -119,7 +119,12 @@ export class RouteService {
           geometry: step.geometry
         }))
       })),
-      waypoints: route.legs.map(leg => leg.steps[0].maneuver.location)
+      waypoints: route.legs.map(leg => leg.steps[0].maneuver.location),
+      summary: {
+        totalDistance: this.formatDistance(route.distance),
+        totalDuration: this.formatDuration(route.duration),
+        profile: profile
+      }
     };
   }
 

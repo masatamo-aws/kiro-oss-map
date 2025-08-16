@@ -128,8 +128,6 @@ export class ImageService {
     // or Mapillary API for open street view images
     
     const size = options.size || '400x300';
-    const heading = options.heading || 0;
-    const pitch = options.pitch || 0;
     
     // For demo purposes, return a placeholder
     return {

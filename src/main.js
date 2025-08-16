@@ -11,17 +11,30 @@ import { EventBus } from './utils/EventBus.js';
 import { Logger } from './utils/Logger.js';
 import { ErrorHandler } from './utils/ErrorHandler.js';
 import { StorageService } from './services/StorageService.js';
+import { MeasurementService } from './services/MeasurementService.js';
+import { BookmarkService } from './services/BookmarkService.js';
+import { UIAnimationService } from './services/UIAnimationService.js';
+import { I18nService } from './services/I18nService.js';
+import { PerformanceService } from './services/PerformanceService.js';
+import { WorkerManager } from './services/WorkerManager.js';
 
 // Web Components
 import './components/SearchBox.js';
 import './components/RoutePanel.js';
 import './components/ShareDialog.js';
+import './components/MeasurementPanel.js';
+import './components/BookmarkPanel.js';
+import './components/ToastNotification.js';
+import './components/LoadingSpinner.js';
+import './components/ProgressBar.js';
+import './components/LanguageSwitcher.js';
+import './components/VirtualScrollList.js';
 
 class App {
   constructor() {
     this.services = {};
     this.isInitialized = false;
-    this.version = '1.0.0'; // アプリケーションバージョン
+    this.version = '1.2.1';
     
     this.init();
   }
@@ -48,6 +61,9 @@ class App {
       
       this.isInitialized = true;
       
+      // Make app instance globally accessible for components
+      window.app = this;
+      
       // Emit app ready event
       EventBus.emit('app:ready');
       
@@ -67,6 +83,12 @@ class App {
       this.services.search = new SearchService();
       this.services.route = new RouteService();
       this.services.share = new ShareService();
+      this.services.measurement = new MeasurementService();
+      this.services.bookmark = new BookmarkService();
+      this.services.uiAnimation = new UIAnimationService();
+      this.services.i18n = new I18nService();
+      this.services.performance = new PerformanceService();
+      this.services.workerManager = new WorkerManager();
 
       // Apply saved theme early
       this.services.theme.initialize();
@@ -75,13 +97,22 @@ class App {
       await this.waitForMapLibre();
 
       // Initialize map service
+      Logger.info('Initializing map service...');
       this.services.map = new MapService();
+      
+      // Show map loading indicator
+      this.showMapLoading();
+      
       await this.services.map.initialize('map');
+      Logger.info('Map service initialized successfully');
+      
+      // Hide map loading indicator
+      this.hideMapLoading();
 
       // Initialize PWA service last
       this.services.pwa = new PWAService();
 
-      console.log('All services initialized successfully');
+      Logger.info('All services initialized successfully');
     } catch (error) {
       console.error('Service initialization failed:', error);
       throw error;
@@ -129,6 +160,85 @@ class App {
     
     // Initialize theme toggle
     this.initializeThemeToggle();
+    
+    // Initialize bookmark panel
+    this.initializeBookmarkPanel();
+    
+    // Initialize route panel
+    this.initializeRoutePanel();
+    
+    // Initialize measurement panel
+    this.initializeMeasurementPanel();
+    
+    // Initialize share functionality
+    this.initializeShareFunctionality();
+    
+    // Initialize UI components
+    this.initializeUIComponents();
+    
+    // Initialize internationalization
+    this.initializeI18n();
+    
+    // Initialize performance optimization
+    this.initializePerformanceOptimization();
+  }
+
+  showLoading() {
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+      loadingScreen.style.display = 'flex';
+    }
+  }
+
+  hideLoading() {
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+      loadingScreen.style.display = 'none';
+    }
+  }
+
+  showMapLoading() {
+    const mapContainer = document.getElementById('map');
+    if (mapContainer) {
+      mapContainer.innerHTML = `
+        <div class="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-800">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+            <p class="text-gray-600 dark:text-gray-400">地図を読み込み中...</p>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  hideMapLoading() {
+    // Map loading will be replaced by actual map
+  }
+
+  showError(message) {
+    // Show error notification
+    EventBus.emit('toast:show', {
+      message: message,
+      type: 'error',
+      duration: 5000
+    });
+  }
+
+  showNotification(message, type = 'info') {
+    EventBus.emit('toast:show', {
+      message: message,
+      type: type,
+      duration: 3000
+    });
+  }
+
+  // Add other necessary methods here...
+  initializeVersionDisplay() {
+    const versionElement = document.getElementById('app-version');
+    if (versionElement) {
+      versionElement.textContent = `v${this.version}`;
+      versionElement.title = `Kiro OSS Map バージョン ${this.version}`;
+    }
   }
 
   initializeSidebarToggle() {
@@ -219,22 +329,22 @@ class App {
     }
   }
 
-  initializeVersionDisplay() {
-    const versionElement = document.getElementById('app-version');
-    if (versionElement) {
-      versionElement.textContent = `v${this.version}`;
-      versionElement.title = `Kiro OSS Map バージョン ${this.version}`;
-    }
-  }
-
   setupEventListeners() {
     // Search events
     EventBus.on('search:query', (data) => {
       this.handleSearch(data.query);
     });
 
+    EventBus.on('search:execute', (data) => {
+      this.handleSearch(data.query);
+    });
+
     EventBus.on('search:select', (data) => {
       this.handleSearchSelect(data.result);
+    });
+
+    EventBus.on('search:clear', () => {
+      this.clearSearchResults();
     });
 
     // Route events
@@ -261,23 +371,51 @@ class App {
 
     try {
       const results = await this.services.search.search(query);
+      
+      // Send results to SearchBox component
+      EventBus.emit('search:results', { results });
+      
+      // Display results in sidebar
       this.displaySearchResults(results);
     } catch (error) {
       Logger.error('Search failed', error, 'search');
       this.showError('検索に失敗しました。');
+      
+      // Send empty results to SearchBox on error
+      EventBus.emit('search:results', { results: [] });
     }
   }
 
   handleSearchSelect(result) {
+    console.log('handleSearchSelect called with:', result);
+    
+    // Check if map service is initialized
+    if (!this.services.map || !this.services.map.isInitialized) {
+      console.error('Map service is not initialized');
+      this.showNotification('地図が初期化されていません', 'error');
+      return;
+    }
+    
     // Clear previous search markers
     this.services.map.clearMarkers('search-result');
     
+    // Handle different coordinate formats
+    const lng = result.lng || result.longitude;
+    const lat = result.lat || result.latitude;
+    
+    if (!lng || !lat) {
+      console.error('Invalid coordinates:', result);
+      this.showNotification('座標が無効です', 'error');
+      return;
+    }
+    
     // Fly to selected location
-    this.services.map.flyTo([result.longitude, result.latitude], 16);
+    console.log('Flying to coordinates:', [lng, lat]);
+    this.services.map.flyTo([lng, lat], 16);
     
     // Add enhanced marker with popup
-    this.services.map.addMarker(
-      [result.longitude, result.latitude],
+    const markerId = this.services.map.addMarker(
+      [lng, lat],
       result.name,
       `search-result-${result.id || Date.now()}`,
       {
@@ -286,14 +424,16 @@ class App {
         data: {
           id: result.id || Date.now(),
           name: result.name,
-          address: result.address || result.displayName,
+          address: result.address || result.name,
           category: result.category,
-          latitude: result.latitude,
-          longitude: result.longitude,
+          latitude: lat,
+          longitude: lng,
           importance: result.importance
         }
       }
     );
+    
+    console.log('Added marker with ID:', markerId);
 
     // Close sidebar on mobile
     if (window.innerWidth < 768) {
@@ -302,44 +442,6 @@ class App {
         sidebar.classList.add('-translate-x-full');
       }
     }
-  }
-
-  async handleRouteCalculation(data) {
-    try {
-      const route = await this.services.route.calculateRoute(
-        data.origin,
-        data.destination,
-        data.profile || 'driving'
-      );
-      
-      // Display route on map
-      this.services.map.displayRoute(route);
-      
-      // Show route panel
-      EventBus.emit('route:display', { route });
-      
-    } catch (error) {
-      Logger.error('Route calculation failed', error, 'routing');
-      this.showError('経路計算に失敗しました。');
-    }
-  }
-
-  async handleShare(data) {
-    try {
-      const shareUrl = await this.services.share.createShareUrl(data);
-      
-      // Show share dialog
-      EventBus.emit('share:show', { url: shareUrl });
-      
-    } catch (error) {
-      Logger.error('Share creation failed', error, 'sharing');
-      this.showError('共有URLの作成に失敗しました。');
-    }
-  }
-
-  handleMapClick(data) {
-    // Add context menu or marker on map click
-    Logger.debug('Map clicked at:', data.lngLat);
   }
 
   displaySearchResults(results) {
@@ -406,8 +508,10 @@ class App {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const result = JSON.parse(btn.dataset.result);
+        const lng = result.lng || result.longitude;
+        const lat = result.lat || result.latitude;
         EventBus.emit('route:set-origin', { 
-          coordinates: [result.longitude, result.latitude], 
+          coordinates: [lng, lat], 
           name: result.name 
         });
       });
@@ -417,12 +521,71 @@ class App {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const result = JSON.parse(btn.dataset.result);
+        const lng = result.lng || result.longitude;
+        const lat = result.lat || result.latitude;
         EventBus.emit('route:set-destination', { 
-          coordinates: [result.longitude, result.latitude], 
+          coordinates: [lng, lat], 
           name: result.name 
         });
       });
     });
+  }
+
+  clearSearchResults() {
+    // Clear search markers from map
+    if (this.services.map) {
+      this.services.map.clearMarkers('search-result');
+    }
+    
+    // Clear search results from sidebar
+    const searchResults = document.getElementById('search-results');
+    if (searchResults) {
+      searchResults.innerHTML = `
+        <p class="text-gray-500 dark:text-gray-400 text-center" data-animate="fadeInUp" data-i18n="search.placeholder">
+          場所を検索してください
+        </p>
+      `;
+    }
+
+    Logger.info('Search results cleared');
+  }
+
+  async handleRouteCalculation(data) {
+    try {
+      const route = await this.services.route.calculateRoute(
+        data.origin,
+        data.destination,
+        data.profile || 'driving'
+      );
+      
+      // Display route on map
+      this.services.map.displayRoute(route);
+      
+      // Show route panel
+      EventBus.emit('route:display', { route });
+      
+    } catch (error) {
+      Logger.error('Route calculation failed', error, 'routing');
+      this.showError('経路計算に失敗しました。');
+    }
+  }
+
+  async handleShare(data) {
+    try {
+      const shareUrl = await this.services.share.createShareUrl(data);
+      
+      // Show share dialog
+      EventBus.emit('share:show', { url: shareUrl });
+      
+    } catch (error) {
+      Logger.error('Share creation failed', error, 'sharing');
+      this.showError('共有URLの作成に失敗しました。');
+    }
+  }
+
+  handleMapClick(data) {
+    // Add context menu or marker on map click
+    Logger.debug('Map clicked at:', data.lngLat);
   }
 
   handleUrlParameters() {
@@ -478,59 +641,80 @@ class App {
     }
   }
 
-  showLoading() {
-    const loadingScreen = document.getElementById('loading-screen');
-    if (loadingScreen) {
-      loadingScreen.style.display = 'flex';
+  // Placeholder methods for panels - these will be implemented properly
+  initializeBookmarkPanel() {
+    // Bookmark panel initialization
+    Logger.debug('Bookmark panel initialized');
+  }
+
+  initializeRoutePanel() {
+    // Route panel initialization
+    Logger.debug('Route panel initialized');
+  }
+
+  initializeMeasurementPanel() {
+    // Measurement panel initialization
+    Logger.debug('Measurement panel initialized');
+  }
+
+  initializeShareFunctionality() {
+    // Initialize share button
+    const shareBtn = document.getElementById('share-btn');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => {
+        // Get current map state
+        const shareData = {
+          center: this.services.map.getCenter(),
+          zoom: this.services.map.getZoom(),
+          style: this.services.map.getCurrentStyle(),
+          theme: this.services.theme.getCurrentTheme(),
+          markers: this.services.map.getAllMarkers()
+        };
+        
+        // Open share dialog
+        EventBus.emit('share:open', { shareData });
+      });
+    }
+    
+    Logger.debug('Share functionality initialized');
+  }
+
+  initializeUIComponents() {
+    // UI components initialization
+    Logger.debug('UI components initialized');
+  }
+
+  initializeI18n() {
+    // Internationalization initialization
+    if (this.services.i18n) {
+      // I18nService is already initialized in constructor
+      Logger.info('I18n service ready', { 
+        currentLanguage: this.services.i18n.getCurrentLanguage(),
+        supportedLanguages: this.services.i18n.getSupportedLanguages().length
+      });
     }
   }
 
-  hideLoading() {
-    const loadingScreen = document.getElementById('loading-screen');
-    if (loadingScreen) {
-      loadingScreen.style.display = 'none';
+  initializePerformanceOptimization() {
+    // Performance optimization initialization
+    if (this.services.performance) {
+      this.services.performance.startMonitoring();
     }
-  }
 
-  showError(message) {
-    // Hide loading screen
-    this.hideLoading();
-    
-    // Show error message
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'fixed inset-0 bg-red-50 dark:bg-red-900 flex items-center justify-center z-50';
-    errorDiv.innerHTML = `
-      <div class="text-center p-8">
-        <div class="text-red-500 dark:text-red-400 mb-4">
-          <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-          </svg>
-        </div>
-        <h2 class="text-xl font-bold text-red-800 dark:text-red-200 mb-2">エラーが発生しました</h2>
-        <p class="text-red-700 dark:text-red-300 mb-4">${message}</p>
-        <button onclick="window.location.reload()" 
-                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
-          再読み込み
-        </button>
-      </div>
-    `;
-    
-    document.body.appendChild(errorDiv);
-    
-    // Also log to console
-    console.error('Application Error:', message);
+    if (this.services.workerManager) {
+      // WorkerManager is already initialized in constructor
+      Logger.info('Worker manager ready', { 
+        poolSize: this.services.workerManager.workerPool?.length || 0,
+        maxWorkers: this.services.workerManager.maxWorkers 
+      });
+    }
   }
 }
 
-// Initialize app when DOM is loaded
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    new App();
-  });
-} else {
+// Initialize the application when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
   new App();
-}
+});
 
 // Export for debugging
 window.KiroOSSMap = App;

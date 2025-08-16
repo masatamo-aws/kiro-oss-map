@@ -1,4 +1,5 @@
 import { EventBus } from '../utils/EventBus.js';
+import { Logger } from '../utils/Logger.js';
 
 /**
  * Route panel web component
@@ -19,25 +20,32 @@ class RoutePanel extends HTMLElement {
   }
 
   render() {
+    this.className = 'route-panel fixed top-20 right-4 w-80 z-40 hidden';
     this.innerHTML = `
-      <div id="route-panel" class="route-panel">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">経路案内</h3>
-          <button id="close-route" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="route-header bg-gradient-to-r from-green-500 to-green-600 text-white p-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+              </svg>
+              <h2 class="text-xl font-bold">ルート検索</h2>
+            </div>
+            <button class="close-btn text-white hover:text-gray-200 transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <!-- Route Input Form -->
-        <div id="route-form" class="space-y-4">
+        <div class="route-content p-4">
           <!-- Transportation Mode -->
-          <div class="flex space-x-2">
-            <button id="mode-driving" class="flex-1 p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
+          <div class="flex space-x-2 mb-4">
+            <button id="mode-driving" class="mode-btn flex-1 p-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
                                            bg-primary-50 dark:bg-primary-800 text-primary-700 dark:text-primary-300 
                                            border-primary-300 dark:border-primary-600">
-              <svg class="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                       d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -45,9 +53,9 @@ class RoutePanel extends HTMLElement {
               </svg>
               車
             </button>
-            <button id="mode-walking" class="flex-1 p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
+            <button id="mode-walking" class="mode-btn flex-1 p-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
                                             text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-              <svg class="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                       d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
               </svg>
@@ -56,19 +64,18 @@ class RoutePanel extends HTMLElement {
           </div>
 
           <!-- Origin Input -->
-          <div class="relative">
-            <div class="absolute left-3 top-3 w-3 h-3 bg-green-500 rounded-full"></div>
-            <input
-              type="text"
-              id="origin-input"
-              class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                     bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                     placeholder-gray-500 dark:placeholder-gray-400
-                     focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder="出発地を入力"
-            >
-            <button id="use-current-location" class="absolute right-2 top-2 p-1 text-gray-400 hover:text-primary-500" title="現在地を使用">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="relative mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">出発地</label>
+            <input type="text" id="origin-input" 
+                   class="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg 
+                          bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                          placeholder-gray-500 dark:placeholder-gray-400
+                          focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                   placeholder="出発地を入力">
+            <button id="use-current-location" 
+                    class="absolute right-2 top-8 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                    title="現在地を使用">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                       d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -77,74 +84,69 @@ class RoutePanel extends HTMLElement {
           </div>
 
           <!-- Destination Input -->
-          <div class="relative">
-            <div class="absolute left-3 top-3 w-3 h-3 bg-red-500 rounded-full"></div>
-            <input
-              type="text"
-              id="destination-input"
-              class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                     bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                     placeholder-gray-500 dark:placeholder-gray-400
-                     focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder="目的地を入力"
-            >
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">目的地</label>
+            <input type="text" id="destination-input" 
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                          bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                          placeholder-gray-500 dark:placeholder-gray-400
+                          focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                   placeholder="目的地を入力">
           </div>
 
-          <!-- Calculate Button -->
-          <button id="calculate-route" class="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg 
-                                             disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-            経路を検索
-          </button>
-        </div>
+          <!-- Action Buttons -->
+          <div class="flex space-x-2 mb-4">
+            <button id="calculate-route" 
+                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg 
+                           transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled>
+              ルート検索
+            </button>
+            <button id="clear-route" 
+                    class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 
+                           rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              クリア
+            </button>
+          </div>
 
-        <!-- Route Results -->
-        <div id="route-results" class="hidden">
-          <!-- Route Summary -->
-          <div id="route-summary" class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
-            <div class="flex items-center justify-between">
+          <!-- Loading State -->
+          <div id="route-loading" class="hidden text-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto mb-2"></div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">ルートを計算中...</div>
+          </div>
+
+          <!-- Error State -->
+          <div id="route-error" class="hidden bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-3 mb-4">
+            <div class="flex">
+              <svg class="w-5 h-5 text-red-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
               <div>
-                <div id="route-distance" class="text-lg font-semibold text-gray-900 dark:text-white"></div>
-                <div id="route-duration" class="text-sm text-gray-600 dark:text-gray-400"></div>
-              </div>
-              <div class="flex space-x-2">
-                <button id="share-route" class="p-2 text-gray-400 hover:text-primary-500" title="ルートを共有">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
-                  </svg>
-                </button>
-                <button id="print-route" class="p-2 text-gray-400 hover:text-primary-500" title="印刷">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                  </svg>
-                </button>
+                <h4 class="text-sm font-medium text-red-800 dark:text-red-200">エラー</h4>
+                <div id="route-error-message" class="text-sm text-red-700 dark:text-red-300 mt-1"></div>
               </div>
             </div>
           </div>
 
-          <!-- Turn-by-turn Directions -->
-          <div id="route-directions" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
-            <!-- Directions will be populated here -->
-          </div>
-        </div>
+          <!-- Route Results -->
+          <div id="route-results" class="hidden">
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div id="route-distance" class="text-lg font-semibold text-gray-900 dark:text-white"></div>
+                  <div id="route-duration" class="text-sm text-gray-600 dark:text-gray-400"></div>
+                </div>
+                <div id="route-profile" class="text-sm text-gray-500 dark:text-gray-400"></div>
+              </div>
+            </div>
 
-        <!-- Loading State -->
-        <div id="route-loading" class="hidden text-center py-8">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <div class="text-sm text-gray-600 dark:text-gray-400">経路を計算中...</div>
-        </div>
-
-        <!-- Error State -->
-        <div id="route-error" class="hidden text-center py-8">
-          <div class="text-red-500 dark:text-red-400 mb-2">
-            <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-            </svg>
+            <!-- Turn-by-turn directions -->
+            <div>
+              <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ターンバイターン案内</h4>
+              <div id="route-steps" class="space-y-2 max-h-64 overflow-y-auto"></div>
+            </div>
           </div>
-          <div id="error-message" class="text-sm text-gray-600 dark:text-gray-400"></div>
-          <button id="retry-route" class="mt-4 text-primary-600 hover:text-primary-700 text-sm">再試行</button>
         </div>
       </div>
     `;
@@ -152,8 +154,8 @@ class RoutePanel extends HTMLElement {
 
   setupEventListeners() {
     // Close button
-    this.querySelector('#close-route').addEventListener('click', () => {
-      this.close();
+    this.querySelector('.close-btn').addEventListener('click', () => {
+      this.hide();
     });
 
     // Transportation mode buttons
@@ -175,49 +177,27 @@ class RoutePanel extends HTMLElement {
       this.calculateRoute();
     });
 
-    // Share route button
-    this.querySelector('#share-route').addEventListener('click', () => {
-      this.shareRoute();
+    // Clear route button
+    this.querySelector('#clear-route').addEventListener('click', () => {
+      this.clearRoute();
     });
 
-    // Print route button
-    this.querySelector('#print-route').addEventListener('click', () => {
-      this.printRoute();
+    // Input events
+    this.querySelector('#origin-input').addEventListener('input', () => {
+      this.updateCalculateButton();
     });
 
-    // Retry button
-    this.querySelector('#retry-route').addEventListener('click', () => {
-      this.calculateRoute();
+    this.querySelector('#destination-input').addEventListener('input', () => {
+      this.updateCalculateButton();
     });
 
-    // Input validation
-    const originInput = this.querySelector('#origin-input');
-    const destinationInput = this.querySelector('#destination-input');
-    const calculateBtn = this.querySelector('#calculate-route');
-
-    const validateInputs = () => {
-      const hasOrigin = originInput.value.trim().length > 0;
-      const hasDestination = destinationInput.value.trim().length > 0;
-      calculateBtn.disabled = !(hasOrigin && hasDestination);
-    };
-
-    originInput.addEventListener('input', validateInputs);
-    destinationInput.addEventListener('input', validateInputs);
-
-    // Listen for route events
-    EventBus.on('route:display', (data) => {
-      this.displayRoute(data.route);
+    // EventBus listeners
+    EventBus.on('route:setOrigin', (data) => {
+      this.setOrigin(data.location, data.name);
     });
 
-    EventBus.on('route:error', (data) => {
-      this.showError(data.message);
-    });
-
-    // Listen for map clicks to set origin/destination
-    EventBus.on('map:click', (data) => {
-      if (this.isOpen) {
-        this.handleMapClick(data.lngLat);
-      }
+    EventBus.on('route:setDestination', (data) => {
+      this.setDestination(data.location, data.name);
     });
   }
 
@@ -228,131 +208,129 @@ class RoutePanel extends HTMLElement {
     const drivingBtn = this.querySelector('#mode-driving');
     const walkingBtn = this.querySelector('#mode-walking');
     
-    if (profile === 'driving') {
-      drivingBtn.classList.add('bg-primary-50', 'dark:bg-primary-800', 'text-primary-700', 'dark:text-primary-300', 'border-primary-300', 'dark:border-primary-600');
-      drivingBtn.classList.remove('text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
-      
-      walkingBtn.classList.remove('bg-primary-50', 'dark:bg-primary-800', 'text-primary-700', 'dark:text-primary-300', 'border-primary-300', 'dark:border-primary-600');
-      walkingBtn.classList.add('text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
-    } else {
-      walkingBtn.classList.add('bg-primary-50', 'dark:bg-primary-800', 'text-primary-700', 'dark:text-primary-300', 'border-primary-300', 'dark:border-primary-600');
-      walkingBtn.classList.remove('text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
-      
-      drivingBtn.classList.remove('bg-primary-50', 'dark:bg-primary-800', 'text-primary-700', 'dark:text-primary-300', 'border-primary-300', 'dark:border-primary-600');
-      drivingBtn.classList.add('text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
-    }
+    // Reset all buttons
+    [drivingBtn, walkingBtn].forEach(btn => {
+      btn.classList.remove('bg-primary-50', 'dark:bg-primary-800', 'text-primary-700', 'dark:text-primary-300', 'border-primary-300', 'dark:border-primary-600');
+      btn.classList.add('text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
+    });
+    
+    // Activate selected button
+    const activeBtn = profile === 'driving' ? drivingBtn : walkingBtn;
+    activeBtn.classList.remove('text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
+    activeBtn.classList.add('bg-primary-50', 'dark:bg-primary-800', 'text-primary-700', 'dark:text-primary-300', 'border-primary-300', 'dark:border-primary-600');
   }
 
   async useCurrentLocation() {
-    const button = this.querySelector('#use-current-location');
-    const originInput = this.querySelector('#origin-input');
-    
     try {
-      button.disabled = true;
-      button.innerHTML = `
-        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500"></div>
-      `;
+      const geolocation = window.app?.services?.geolocation;
+      if (!geolocation) {
+        throw new Error('位置情報サービスが利用できません');
+      }
 
-      // Get current position
-      const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000
-        });
-      });
-
-      this.origin = [position.coords.longitude, position.coords.latitude];
-      originInput.value = '現在地';
-      
-      // Validate inputs
-      this.querySelector('#calculate-route').disabled = !this.querySelector('#destination-input').value.trim();
-
+      const position = await geolocation.getCurrentPosition();
+      this.setOrigin([position.longitude, position.latitude], '現在地');
     } catch (error) {
-      console.error('Failed to get current location:', error);
-      alert('現在地を取得できませんでした。');
-    } finally {
-      button.disabled = false;
-      button.innerHTML = `
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-        </svg>
-      `;
+      Logger.error('Current location failed', error);
+      this.showError('現在地の取得に失敗しました');
     }
+  }
+
+  setOrigin(location, name) {
+    this.origin = { location, name };
+    this.querySelector('#origin-input').value = name || `${location[1].toFixed(6)}, ${location[0].toFixed(6)}`;
+    this.updateCalculateButton();
+  }
+
+  setDestination(location, name) {
+    this.destination = { location, name };
+    this.querySelector('#destination-input').value = name || `${location[1].toFixed(6)}, ${location[0].toFixed(6)}`;
+    this.updateCalculateButton();
+  }
+
+  updateCalculateButton() {
+    const calculateBtn = this.querySelector('#calculate-route');
+    const hasOrigin = this.origin || this.querySelector('#origin-input').value.trim();
+    const hasDestination = this.destination || this.querySelector('#destination-input').value.trim();
+    
+    calculateBtn.disabled = !hasOrigin || !hasDestination;
   }
 
   async calculateRoute() {
-    const originInput = this.querySelector('#origin-input');
-    const destinationInput = this.querySelector('#destination-input');
-
-    if (!originInput.value.trim() || !destinationInput.value.trim()) {
-      return;
-    }
-
     try {
       this.showLoading();
+      this.hideError();
 
-      // If origin is not coordinates, geocode it
-      if (!this.origin) {
-        // For now, assume it's a search query and emit search event
-        // In a real implementation, you'd geocode the address
-        alert('出発地の座標を設定してください');
-        return;
+      // Get route service
+      const routeService = window.app?.services?.route;
+      if (!routeService) {
+        throw new Error('ルートサービスが利用できません');
       }
 
-      // If destination is not coordinates, geocode it
-      if (!this.destination) {
-        alert('目的地の座標を設定してください');
-        return;
+      // Prepare origin and destination
+      let origin = this.origin?.location;
+      let destination = this.destination?.location;
+
+      // If no coordinates, try to geocode the input text
+      if (!origin) {
+        const originText = this.querySelector('#origin-input').value.trim();
+        if (originText) {
+          const searchService = window.app?.services?.search;
+          const results = await searchService.search(originText);
+          if (results.length > 0) {
+            origin = [results[0].lng, results[0].lat];
+          }
+        }
       }
 
-      // Emit route calculation event
-      EventBus.emit('route:calculate', {
-        origin: this.origin,
-        destination: this.destination,
-        profile: this.profile
-      });
+      if (!destination) {
+        const destinationText = this.querySelector('#destination-input').value.trim();
+        if (destinationText) {
+          const searchService = window.app?.services?.search;
+          const results = await searchService.search(destinationText);
+          if (results.length > 0) {
+            destination = [results[0].lng, results[0].lat];
+          }
+        }
+      }
+
+      if (!origin || !destination) {
+        throw new Error('出発地と目的地を正しく設定してください');
+      }
+
+      // Calculate route
+      const route = await routeService.calculateRoute(origin, destination, this.profile);
+      this.currentRoute = route;
+
+      // Display route on map
+      EventBus.emit('map:showRoute', { route });
+
+      // Show results
+      this.showResults(route);
 
     } catch (error) {
-      console.error('Route calculation failed:', error);
-      this.showError('経路計算に失敗しました');
+      Logger.error('Route calculation failed', error);
+      this.showError(error.message || 'ルート計算に失敗しました');
+    } finally {
+      this.hideLoading();
     }
   }
 
-  displayRoute(route) {
-    this.currentRoute = route;
-    
-    // Hide loading and form, show results
-    this.querySelector('#route-loading').classList.add('hidden');
-    this.querySelector('#route-error').classList.add('hidden');
-    this.querySelector('#route-form').classList.add('hidden');
-    this.querySelector('#route-results').classList.remove('hidden');
+  showResults(route) {
+    const resultsDiv = this.querySelector('#route-results');
+    const distanceDiv = this.querySelector('#route-distance');
+    const durationDiv = this.querySelector('#route-duration');
+    const profileDiv = this.querySelector('#route-profile');
+    const stepsDiv = this.querySelector('#route-steps');
 
     // Update summary
-    const distanceEl = this.querySelector('#route-distance');
-    const durationEl = this.querySelector('#route-duration');
-    
-    distanceEl.textContent = this.formatDistance(route.distance);
-    durationEl.textContent = this.formatDuration(route.duration);
+    distanceDiv.textContent = route.summary.totalDistance;
+    durationDiv.textContent = route.summary.totalDuration;
+    profileDiv.textContent = route.profile === 'driving' ? '車' : '徒歩';
 
-    // Update directions
-    this.displayDirections(route);
-  }
-
-  displayDirections(route) {
-    const directionsEl = this.querySelector('#route-directions');
-    
-    if (!route.legs || route.legs.length === 0) {
-      directionsEl.innerHTML = '<div class="text-gray-500 dark:text-gray-400">経路情報がありません</div>';
-      return;
-    }
-
-    const steps = route.legs.flatMap(leg => leg.steps || []);
-    
-    directionsEl.innerHTML = steps.map((step, index) => `
-      <div class="flex items-start space-x-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
-        <div class="flex-shrink-0 w-6 h-6 bg-primary-100 dark:bg-primary-800 text-primary-600 dark:text-primary-400 
+    // Update steps
+    stepsDiv.innerHTML = route.steps.map((step, index) => `
+      <div class="flex items-start space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600">
+        <div class="flex-shrink-0 w-6 h-6 bg-primary-100 dark:bg-primary-800 text-primary-600 dark:text-primary-300 
                     rounded-full flex items-center justify-center text-xs font-medium">
           ${index + 1}
         </div>
@@ -364,102 +342,8 @@ class RoutePanel extends HTMLElement {
         </div>
       </div>
     `).join('');
-  }
 
-  showLoading() {
-    this.querySelector('#route-form').classList.add('hidden');
-    this.querySelector('#route-results').classList.add('hidden');
-    this.querySelector('#route-error').classList.add('hidden');
-    this.querySelector('#route-loading').classList.remove('hidden');
-  }
-
-  showError(message) {
-    this.querySelector('#route-loading').classList.add('hidden');
-    this.querySelector('#route-results').classList.add('hidden');
-    this.querySelector('#error-message').textContent = message;
-    this.querySelector('#route-error').classList.remove('hidden');
-  }
-
-  async shareRoute() {
-    if (!this.currentRoute || !this.origin || !this.destination) return;
-
-    try {
-      const result = await EventBus.emit('share:create', {
-        type: 'route',
-        origin: this.origin,
-        destination: this.destination,
-        profile: this.profile
-      });
-
-      if (result && result.success) {
-        alert(result.message || 'ルートを共有しました');
-      }
-    } catch (error) {
-      console.error('Failed to share route:', error);
-      alert('共有に失敗しました');
-    }
-  }
-
-  printRoute() {
-    if (!this.currentRoute) return;
-
-    // Create a print-friendly version
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>経路案内 - Kiro OSS Map</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
-            .summary { background: #f5f5f5; padding: 15px; margin-bottom: 20px; }
-            .step { margin-bottom: 10px; padding: 10px; border-left: 3px solid #3b82f6; }
-            .step-number { font-weight: bold; color: #3b82f6; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>経路案内</h1>
-            <p>Generated by Kiro OSS Map</p>
-          </div>
-          <div class="summary">
-            <h2>経路概要</h2>
-            <p><strong>距離:</strong> ${this.formatDistance(this.currentRoute.distance)}</p>
-            <p><strong>所要時間:</strong> ${this.formatDuration(this.currentRoute.duration)}</p>
-            <p><strong>交通手段:</strong> ${this.profile === 'driving' ? '車' : '徒歩'}</p>
-          </div>
-          <div class="directions">
-            <h2>詳細案内</h2>
-            ${this.currentRoute.legs.flatMap(leg => leg.steps || []).map((step, index) => `
-              <div class="step">
-                <span class="step-number">${index + 1}.</span>
-                ${step.instruction}
-                <br><small>${this.formatDistance(step.distance)} • ${this.formatDuration(step.duration)}</small>
-              </div>
-            `).join('')}
-          </div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-  }
-
-  handleMapClick(lngLat) {
-    // Allow setting origin/destination by clicking on map
-    const originInput = this.querySelector('#origin-input');
-    const destinationInput = this.querySelector('#destination-input');
-
-    if (!originInput.value.trim()) {
-      this.origin = [lngLat.lng, lngLat.lat];
-      originInput.value = `${lngLat.lat.toFixed(6)}, ${lngLat.lng.toFixed(6)}`;
-    } else if (!destinationInput.value.trim()) {
-      this.destination = [lngLat.lng, lngLat.lat];
-      destinationInput.value = `${lngLat.lat.toFixed(6)}, ${lngLat.lng.toFixed(6)}`;
-    }
-
-    // Validate inputs
-    this.querySelector('#calculate-route').disabled = !(originInput.value.trim() && destinationInput.value.trim());
+    resultsDiv.classList.remove('hidden');
   }
 
   formatDistance(meters) {
@@ -471,39 +355,71 @@ class RoutePanel extends HTMLElement {
   }
 
   formatDuration(seconds) {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    
-    if (hours > 0) {
-      return `${hours}時間${minutes}分`;
-    } else {
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) {
       return `${minutes}分`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return `${hours}時間${remainingMinutes}分`;
     }
   }
 
-  // Public API
-  open() {
-    this.isOpen = true;
-    this.querySelector('#route-panel').classList.add('open');
-  }
+  clearRoute() {
+    this.origin = null;
+    this.destination = null;
+    this.currentRoute = null;
 
-  close() {
-    this.isOpen = false;
-    this.querySelector('#route-panel').classList.remove('open');
+    this.querySelector('#origin-input').value = '';
+    this.querySelector('#destination-input').value = '';
+    this.querySelector('#route-results').classList.add('hidden');
     
+    this.updateCalculateButton();
+    this.hideError();
+
     // Clear route from map
-    EventBus.emit('route:clear');
+    EventBus.emit('map:clearRoute');
   }
 
-  setOrigin(coordinates, name = '') {
-    this.origin = coordinates;
-    this.querySelector('#origin-input').value = name || `${coordinates[1].toFixed(6)}, ${coordinates[0].toFixed(6)}`;
+  showLoading() {
+    this.querySelector('#route-loading').classList.remove('hidden');
+    this.querySelector('#route-results').classList.add('hidden');
   }
 
-  setDestination(coordinates, name = '') {
-    this.destination = coordinates;
-    this.querySelector('#destination-input').value = name || `${coordinates[1].toFixed(6)}, ${coordinates[0].toFixed(6)}`;
+  hideLoading() {
+    this.querySelector('#route-loading').classList.add('hidden');
+  }
+
+  showError(message) {
+    const errorDiv = this.querySelector('#route-error');
+    const messageDiv = this.querySelector('#route-error-message');
+    
+    messageDiv.textContent = message;
+    errorDiv.classList.remove('hidden');
+  }
+
+  hideError() {
+    this.querySelector('#route-error').classList.add('hidden');
+  }
+
+  show() {
+    this.classList.remove('hidden');
+    this.isOpen = true;
+  }
+
+  hide() {
+    this.classList.add('hidden');
+    this.isOpen = false;
+  }
+
+  toggle() {
+    if (this.isOpen) {
+      this.hide();
+    } else {
+      this.show();
+    }
   }
 }
 
+// Register the custom element
 customElements.define('route-panel', RoutePanel);
