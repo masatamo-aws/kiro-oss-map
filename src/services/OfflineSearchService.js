@@ -217,7 +217,7 @@ class OfflineSearchService {
   }
 
   // Get autocomplete suggestions
-  getAutocompleteSuggestions(query, limit = 5) {
+  getAutocompleteSuggestions(query, limit = 10) {
     const queryLower = query.toLowerCase();
     const suggestions = [];
     

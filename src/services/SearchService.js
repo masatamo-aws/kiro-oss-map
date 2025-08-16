@@ -51,9 +51,12 @@ export class SearchService {
         timestamp: Date.now()
       });
       
-      // Cache results for offline use
+      // Cache results for offline use (background)
       if (results.length > 0) {
-        await this.offlineSearch.cacheSearchResults(query, results);
+        // Use setTimeout to avoid blocking the main thread
+        setTimeout(() => {
+          this.offlineSearch.cacheSearchResults(query, results);
+        }, 0);
       }
 
       return results;
