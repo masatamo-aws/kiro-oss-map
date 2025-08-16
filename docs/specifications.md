@@ -1,9 +1,10 @@
 # Kiro OSS Map - 技術仕様書
 
-**バージョン**: 1.2.1  
+**バージョン**: 1.3.0  
 **作成日**: 2025年8月13日  
-**最終更新**: 2025年8月16日 11:30:00  
-**実装状況**: 100%完了 ✅
+**最終更新**: 2025年8月16日 14:30:00  
+**実装状況**: 100%完了 ✅  
+**Phase A完了**: PWA強化・パフォーマンス最適化 ✅
 
 ## 1. 実装済み技術スタック
 
@@ -11,7 +12,7 @@
 
 ## 📋 概要
 
-Kiro OSS Map v1.2.1の詳細な技術仕様を定義します。
+Kiro OSS Map v1.3.0の詳細な技術仕様を定義します。Phase A（新機能拡張・パフォーマンス向上）の実装内容を含みます。
 
 ## 🏗️ システム構成
 
@@ -2861,4 +2862,611 @@ const QualityMetricsSpec = {
 **技術仕様完了**: 2025年8月16日 11:30:00  
 **技術責任者**: 開発チーム  
 **承認**: Production Ready Plus  
-**次回レビュー**: 機能拡張時
+**次回レビュー**: 機能拡張時---
+
+
+## 🚀 v1.3.0 Phase A 技術仕様拡張
+
+### 2.1 PWA・オフライン機能仕様
+
+#### 2.1.1 Service Worker仕様
+```javascript
+// Service Worker v1.3.0 仕様
+const SERVICE_WORKER_SPEC = {
+  version: '1.3.0',
+  scope: '/',
+  caches: {
+    static: 'static-v1.3.0',
+    dynamic: 'dynamic-v1.3.0', 
+    tiles: 'tiles-v1.3.0'
+  },
+  strategies: {
+    static: 'cache-first',
+    dynamic: 'network-first',
+    tiles: 'cache-first-with-background-update'
+  },
+  limits: {
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7日
+    maxSize: 50 * 1024 * 1024,        // 50MB
+    maxEntries: 1000
+  }
+};
+```
+
+#### 2.1.2 オフライン検索仕様
+```javascript
+// OfflineSearchService 仕様
+const OFFLINE_SEARCH_SPEC = {
+  database: {
+    name: 'KiroOSSMapOffline',
+    version: 1,
+    stores: {
+      searchData: {
+        keyPath: 'id',
+        indexes: ['name', 'category', 'location']
+      },
+      searchIndex: {
+        keyPath: 'term'
+      }
+    }
+  },
+  features: {
+    exactMatch: true,
+    fuzzySearch: true,
+    autocomplete: true,
+    categoryFilter: true,
+    boundsFilter: true
+  },
+  performance: {
+    maxResults: 100,
+    searchTimeout: 5000,
+    indexSize: 10000
+  }
+};
+```
+
+### 2.2 パフォーマンス最適化仕様
+
+#### 2.2.1 画像最適化仕様
+```javascript
+// ImageOptimizationService 仕様
+const IMAGE_OPTIMIZATION_SPEC = {
+  formats: {
+    primary: 'avif',
+    fallback: 'webp',
+    default: 'jpeg'
+  },
+  lazyLoading: {
+    rootMargin: '50px 0px',
+    threshold: 0.01,
+    loadingClass: 'loading',
+    loadedClass: 'loaded',
+    errorClass: 'error'
+  },
+  compression: {
+    quality: 0.8,
+    maxWidth: 1920,
+    maxHeight: 1080,
+    format: 'image/jpeg'
+  },
+  cache: {
+    maxSize: 100,
+    ttl: 3600000 // 1時間
+  }
+};
+```
+
+#### 2.2.2 ビルド最適化仕様
+```javascript
+// Vite Configuration v1.3.0
+const BUILD_OPTIMIZATION_SPEC = {
+  build: {
+    target: 'es2020',
+    minify: 'terser',
+    sourcemap: false, // 本番環境
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'maplibre': ['maplibre-gl'],
+          'vendor': ['eventemitter3'],
+          'services': ['./services/*.js'],
+          'components': ['./components/*.js']
+        }
+      }
+    }
+  },
+  terserOptions: {
+    compress: {
+      drop_console: true,
+      drop_debugger: true,
+      pure_funcs: ['console.log']
+    }
+  }
+};
+```
+
+### 2.3 ブラウザ互換性仕様
+
+#### 2.3.1 対応ブラウザ仕様
+```javascript
+// Browser Compatibility Specification
+const BROWSER_SUPPORT_SPEC = {
+  supported: {
+    chrome: '>=80',
+    firefox: '>=75', 
+    safari: '>=13',
+    edge: '>=80',
+    ios_saf: '>=13',
+    android: '>=80'
+  },
+  features: {
+    required: [
+      'es6Classes',
+      'fetch',
+      'webgl',
+      'localStorage',
+      'customElements'
+    ],
+    optional: [
+      'serviceWorker',
+      'intersectionObserver',
+      'resizeObserver',
+      'webp',
+      'avif'
+    ]
+  },
+  polyfills: {
+    webcomponents: '@webcomponents/webcomponentsjs@2.8.0',
+    intersectionObserver: 'intersection-observer@0.12.2',
+    resizeObserver: 'resize-observer-polyfill@1.5.1',
+    fetch: 'whatwg-fetch@3.6.2'
+  }
+};
+```
+
+---
+
+## 📊 v1.3.0 API仕様
+
+### 3.1 新サービスAPI仕様
+
+#### 3.1.1 ImageOptimizationService API
+```typescript
+interface ImageOptimizationService {
+  // フォーマット検出
+  detectSupportedFormats(): SupportedFormats;
+  
+  // URL最適化
+  optimizeImageUrl(url: string, options?: OptimizationOptions): string;
+  
+  // 画像読み込み
+  loadOptimizedImage(src: string, options?: LoadOptions): Promise<ImageResult>;
+  
+  // 遅延読み込み
+  lazyLoad(element: HTMLImageElement, src: string, options?: LazyOptions): void;
+  
+  // 画像圧縮
+  compressImage(file: File, options?: CompressionOptions): Promise<Blob>;
+  
+  // キャッシュ管理
+  clearCache(): void;
+  getCacheStats(): CacheStats;
+}
+
+interface OptimizationOptions {
+  width?: number;
+  height?: number;
+  quality?: number;
+  format?: 'auto' | 'webp' | 'avif' | 'jpeg';
+  dpr?: number;
+}
+```
+
+#### 3.1.2 OfflineSearchService API
+```typescript
+interface OfflineSearchService {
+  // 初期化
+  init(): Promise<void>;
+  
+  // 検索結果キャッシュ
+  cacheSearchResults(query: string, results: SearchResult[]): Promise<void>;
+  
+  // オフライン検索
+  searchOffline(query: string, options?: SearchOptions): Promise<SearchResult[]>;
+  
+  // オートコンプリート
+  getAutocompleteSuggestions(query: string, limit?: number): string[];
+  
+  // キャッシュ管理
+  clearOldCache(maxAge?: number): Promise<void>;
+  getCacheStats(): Promise<CacheStats>;
+}
+
+interface SearchOptions {
+  limit?: number;
+  category?: string;
+  bounds?: BoundingBox;
+}
+```
+
+#### 3.1.3 BrowserCompatibilityService API
+```typescript
+interface BrowserCompatibilityService {
+  // ブラウザ情報
+  readonly browserInfo: BrowserInfo;
+  readonly features: FeatureSupport;
+  
+  // 互換性チェック
+  checkCompatibility(): boolean;
+  isOldBrowser(): boolean;
+  
+  // Polyfill管理
+  loadRequiredPolyfills(): Promise<void>;
+  loadPolyfill(name: string, url: string): Promise<void>;
+  
+  // レポート
+  getCompatibilityReport(): CompatibilityReport;
+}
+
+interface BrowserInfo {
+  name: string;
+  version: number;
+  userAgent: string;
+  mobile: boolean;
+}
+```
+
+### 3.2 Service Worker API仕様
+
+#### 3.2.1 キャッシュ管理API
+```typescript
+// Service Worker Message API
+interface ServiceWorkerMessages {
+  SKIP_WAITING: void;
+  CLEAR_CACHE: { cacheName: string };
+  CACHE_TILES: { bounds: BoundingBox; zoomLevels: number[] };
+}
+
+// キャッシュ戦略
+interface CacheStrategy {
+  handleTilesRequest(request: Request): Promise<Response>;
+  handleApiRequest(request: Request): Promise<Response>;
+  handleImageRequest(request: Request): Promise<Response>;
+  handleStaticRequest(request: Request): Promise<Response>;
+}
+```
+
+---
+
+## 🔧 v1.3.0 設定仕様
+
+### 4.1 環境設定仕様
+
+#### 4.1.1 開発環境設定
+```javascript
+// 開発環境設定
+const DEV_CONFIG = {
+  server: {
+    port: 3000,
+    host: true,
+    open: true,
+    cors: true
+  },
+  build: {
+    sourcemap: true,
+    minify: false,
+    watch: true
+  },
+  optimization: {
+    splitChunks: false,
+    minimize: false
+  }
+};
+```
+
+#### 4.1.2 本番環境設定
+```javascript
+// 本番環境設定
+const PROD_CONFIG = {
+  build: {
+    sourcemap: false,
+    minify: 'terser',
+    target: 'es2020',
+    outDir: 'dist',
+    assetsDir: 'assets'
+  },
+  optimization: {
+    splitChunks: true,
+    minimize: true,
+    treeshake: true,
+    compression: 'gzip'
+  },
+  security: {
+    csp: true,
+    https: true,
+    hsts: true
+  }
+};
+```
+
+### 4.2 PWA設定仕様
+
+#### 4.2.1 Web App Manifest
+```json
+{
+  "name": "Kiro OSS Map",
+  "short_name": "KiroMap",
+  "description": "オープンソース地図アプリケーション",
+  "version": "1.3.0",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#3b82f6",
+  "background_color": "#ffffff",
+  "categories": ["maps", "navigation", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+```
+
+---
+
+## 📈 v1.3.0 パフォーマンス仕様
+
+### 5.1 パフォーマンス目標値
+
+#### 5.1.1 読み込み性能
+```javascript
+const PERFORMANCE_TARGETS = {
+  // Core Web Vitals
+  LCP: 2.5,      // Largest Contentful Paint (秒)
+  FID: 100,      // First Input Delay (ミリ秒)
+  CLS: 0.1,      // Cumulative Layout Shift
+  
+  // カスタム指標
+  TTI: 3.0,      // Time to Interactive (秒)
+  FCP: 1.5,      // First Contentful Paint (秒)
+  SI: 3.0,       // Speed Index (秒)
+  
+  // アプリ固有
+  mapLoad: 2.0,  // 地図初期表示 (秒)
+  searchResponse: 1.0, // 検索応答 (秒)
+  routeCalc: 3.0 // ルート計算 (秒)
+};
+```
+
+#### 5.1.2 リソース制限
+```javascript
+const RESOURCE_LIMITS = {
+  // バンドルサイズ
+  mainBundle: 200 * 1024,    // 200KB
+  totalJS: 500 * 1024,       // 500KB
+  totalCSS: 50 * 1024,       // 50KB
+  
+  // メモリ使用量
+  initialMemory: 30 * 1024 * 1024,  // 30MB
+  maxMemory: 100 * 1024 * 1024,     // 100MB
+  
+  // キャッシュサイズ
+  serviceWorkerCache: 50 * 1024 * 1024, // 50MB
+  indexedDBSize: 20 * 1024 * 1024,      // 20MB
+  
+  // ネットワーク
+  maxRequests: 10,           // 同時リクエスト数
+  timeout: 30000             // タイムアウト (ミリ秒)
+};
+```
+
+### 5.2 最適化仕様
+
+#### 5.2.1 コード分割仕様
+```javascript
+const CODE_SPLITTING_SPEC = {
+  chunks: {
+    vendor: {
+      test: /[\\/]node_modules[\\/]/,
+      name: 'vendors',
+      chunks: 'all',
+      priority: 10
+    },
+    common: {
+      name: 'common',
+      minChunks: 2,
+      chunks: 'all',
+      priority: 5
+    },
+    services: {
+      test: /[\\/]services[\\/]/,
+      name: 'services',
+      chunks: 'all',
+      priority: 8
+    },
+    components: {
+      test: /[\\/]components[\\/]/,
+      name: 'components', 
+      chunks: 'all',
+      priority: 7
+    }
+  }
+};
+```
+
+---
+
+## 🔒 v1.3.0 セキュリティ仕様
+
+### 6.1 データ保護仕様（継続）
+
+#### 6.1.1 暗号化仕様（v1.2.1継続）
+```javascript
+// 暗号化仕様（既存）
+const ENCRYPTION_SPEC = {
+  algorithm: '3-round-xor-with-salt',
+  keyDerivation: {
+    method: 'browser-fingerprint + pbkdf2',
+    iterations: 1000,
+    saltLength: 16
+  },
+  dataTypes: [
+    'bookmarks',
+    'searchHistory', 
+    'userPreferences',
+    'measurementHistory'
+  ]
+};
+```
+
+### 6.2 新セキュリティ機能
+
+#### 6.2.1 Content Security Policy
+```javascript
+const CSP_SPEC = {
+  'default-src': "'self'",
+  'script-src': "'self' 'unsafe-inline'",
+  'style-src': "'self' 'unsafe-inline'",
+  'img-src': "'self' data: https:",
+  'connect-src': "'self' https://nominatim.openstreetmap.org https://router.project-osrm.org",
+  'font-src': "'self'",
+  'object-src': "'none'",
+  'base-uri': "'self'",
+  'form-action': "'self'"
+};
+```
+
+---
+
+## 🧪 v1.3.0 テスト仕様
+
+### 7.1 テスト戦略
+
+#### 7.1.1 テスト種別
+```javascript
+const TEST_STRATEGY = {
+  unit: {
+    framework: 'Vitest',
+    coverage: 80,
+    files: 'src/**/*.{test,spec}.js'
+  },
+  integration: {
+    framework: 'Vitest + jsdom',
+    coverage: 70,
+    files: 'tests/integration/**/*.test.js'
+  },
+  e2e: {
+    framework: 'Playwright',
+    browsers: ['chromium', 'firefox', 'webkit'],
+    files: 'tests/e2e/**/*.spec.js'
+  },
+  performance: {
+    framework: 'Lighthouse CI',
+    thresholds: {
+      performance: 90,
+      accessibility: 95,
+      'best-practices': 90,
+      seo: 80,
+      pwa: 90
+    }
+  }
+};
+```
+
+### 7.2 品質ゲート
+
+#### 7.2.1 リリース基準
+```javascript
+const QUALITY_GATES = {
+  functionality: {
+    unitTests: 95,      // 95%以上成功
+    integrationTests: 90, // 90%以上成功
+    e2eTests: 100,      // 100%成功必須
+    criticalBugs: 0     // クリティカルバグ0件
+  },
+  performance: {
+    lighthouse: 90,     // Lighthouse 90点以上
+    loadTime: 2.0,      // 2秒以内
+    memoryUsage: 50,    // 50MB以下
+    bundleSize: 500     // 500KB以下
+  },
+  security: {
+    vulnerabilities: 0, // 脆弱性0件
+    csp: true,         // CSP設定必須
+    https: true,       // HTTPS必須
+    dataEncryption: true // データ暗号化必須
+  }
+};
+```
+
+---
+
+## 📋 v1.3.0 運用仕様
+
+### 8.1 監視・ログ仕様
+
+#### 8.1.1 パフォーマンス監視
+```javascript
+const MONITORING_SPEC = {
+  metrics: {
+    coreWebVitals: ['LCP', 'FID', 'CLS'],
+    customMetrics: ['mapLoadTime', 'searchResponseTime'],
+    resourceMetrics: ['memoryUsage', 'cacheHitRate'],
+    errorMetrics: ['jsErrors', 'networkErrors']
+  },
+  alerts: {
+    performanceDegradation: {
+      threshold: '20% increase',
+      window: '5 minutes'
+    },
+    errorRate: {
+      threshold: '5% of requests',
+      window: '1 minute'
+    }
+  }
+};
+```
+
+### 8.2 デプロイメント仕様
+
+#### 8.2.1 CI/CD パイプライン
+```yaml
+# GitHub Actions Workflow
+deployment_spec:
+  stages:
+    - lint_and_format
+    - unit_tests
+    - integration_tests
+    - build_optimization
+    - security_scan
+    - performance_test
+    - e2e_tests
+    - deploy_staging
+    - smoke_tests
+    - deploy_production
+  
+  quality_gates:
+    test_coverage: 80%
+    performance_score: 90
+    security_scan: pass
+    accessibility_score: 95
+```
+
+---
+
+**技術仕様書バージョン**: 3.0  
+**最終更新**: 2025年8月16日 14:30:00  
+**対象システム**: Kiro OSS Map v1.3.0  
+**仕様完成度**: 100%  
+**実装準拠率**: 100%
