@@ -1,16 +1,32 @@
 /**
  * Search service for geocoding and POI search
+ * Enhanced with offline capabilities in v1.3.0
  */
+import OfflineSearchService from './OfflineSearchService.js';
+
 export class SearchService {
   constructor() {
     this.cache = new Map();
     this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
+    this.offlineSearch = OfflineSearchService;
+    this.isOnline = navigator.onLine;
+    
+    // Listen for online/offline events
+    window.addEventListener('online', () => {
+      this.isOnline = true;
+      console.log('[SearchService] Back online');
+    });
+    
+    window.addEventListener('offline', () => {
+      this.isOnline = false;
+      console.log('[SearchService] Gone offline');
+    });
   }
 
   async search(query, options = {}) {
     const cacheKey = `search:${query}:${JSON.stringify(options)}`;
     
-    // Check cache first
+    // Check memory cache first
     if (this.cache.has(cacheKey)) {
       const cached = this.cache.get(cacheKey);
       if (Date.now() - cached.timestamp < this.cacheTimeout) {
@@ -19,20 +35,38 @@ export class SearchService {
       this.cache.delete(cacheKey);
     }
 
+    // If offline, use offline search
+    if (!this.isOnline) {
+      console.log('[SearchService] Searching offline');
+      return await this.offlineSearch.searchOffline(query, options);
+    }
+
     try {
       // Use Nominatim for geocoding
       const results = await this.searchNominatim(query, options);
       
-      // Cache results
+      // Cache results in memory
       this.cache.set(cacheKey, {
         data: results,
         timestamp: Date.now()
       });
+      
+      // Cache results for offline use
+      if (results.length > 0) {
+        await this.offlineSearch.cacheSearchResults(query, results);
+      }
 
       return results;
     } catch (error) {
-      console.error('Search failed:', error);
-      throw error;
+      console.error('Online search failed, trying offline:', error);
+      
+      // Fallback to offline search
+      try {
+        return await this.offlineSearch.searchOffline(query, options);
+      } catch (offlineError) {
+        console.error('Offline search also failed:', offlineError);
+        throw error; // Throw original error
+      }
     }
   }
 

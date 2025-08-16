@@ -1,4 +1,4 @@
-// Main application entry point
+// Main application entry point - v1.3.0
 import './styles/main.css';
 import { MapService } from './services/MapService.js';
 import { SearchService } from './services/SearchService.js';
@@ -18,6 +18,10 @@ import { I18nService } from './services/I18nService.js';
 import { PerformanceService } from './services/PerformanceService.js';
 import { WorkerManager } from './services/WorkerManager.js';
 
+// v1.3.0 New Services
+import ImageOptimizationService from './services/ImageOptimizationService.js';
+import BrowserCompatibilityService from './services/BrowserCompatibilityService.js';
+
 // Web Components
 import './components/SearchBox.js';
 import './components/RoutePanel.js';
@@ -34,7 +38,7 @@ class App {
   constructor() {
     this.services = {};
     this.isInitialized = false;
-    this.version = '1.2.1';
+    this.version = '1.3.0';
     
     this.init();
   }
@@ -76,7 +80,10 @@ class App {
 
   async initializeServices() {
     try {
-      // Initialize core services first
+      // Initialize compatibility service first
+      this.services.compatibility = BrowserCompatibilityService;
+      
+      // Initialize core services
       this.services.storage = new StorageService();
       this.services.theme = new ThemeService();
       this.services.geolocation = new GeolocationService();
@@ -89,9 +96,15 @@ class App {
       this.services.i18n = new I18nService();
       this.services.performance = new PerformanceService();
       this.services.workerManager = new WorkerManager();
+      
+      // v1.3.0 New services
+      this.services.imageOptimization = ImageOptimizationService;
 
       // Apply saved theme early
       this.services.theme.initialize();
+      
+      // Register Service Worker for PWA functionality
+      await this.registerServiceWorker();
 
       // Wait for MapLibre GL to be available
       await this.waitForMapLibre();
@@ -639,6 +652,69 @@ class App {
       Logger.error('Failed to load shared content', error, 'shared-content');
       this.showError('共有コンテンツの読み込みに失敗しました。');
     }
+  }
+
+  // Service Worker registration for v1.3.0 PWA enhancement
+  async registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/'
+        });
+        
+        Logger.info('Service Worker registered successfully', {
+          scope: registration.scope,
+          version: '1.3.0'
+        });
+        
+        // Handle service worker updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New service worker is available
+                this.showUpdateNotification();
+              }
+            });
+          }
+        });
+        
+        // Listen for messages from service worker
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          const { type, data } = event.data;
+          
+          switch (type) {
+            case 'CACHE_UPDATED':
+              Logger.info('Cache updated by service worker');
+              break;
+            case 'OFFLINE_READY':
+              this.showNotification('オフライン機能が利用可能です', 'success');
+              break;
+          }
+        });
+        
+      } catch (error) {
+        Logger.error('Service Worker registration failed', error);
+      }
+    }
+  }
+  
+  showUpdateNotification() {
+    EventBus.emit('toast:show', {
+      message: 'アプリの新しいバージョンが利用可能です',
+      type: 'info',
+      duration: 0, // Persistent
+      actions: [{
+        text: '更新',
+        action: () => {
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+            window.location.reload();
+          }
+        }
+      }]
+    });
   }
 
   // Placeholder methods for panels - these will be implemented properly
