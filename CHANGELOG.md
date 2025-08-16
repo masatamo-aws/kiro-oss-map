@@ -1,285 +1,312 @@
-# Changelog
+# 変更履歴
 
-All notable changes to Kiro OSS Map will be documented in this file.
+Kiro OSS Mapプロジェクトの重要な変更はすべてこのファイルに記録されます。
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+フォーマットは[Keep a Changelog](https://keepachangelog.com/en/1.0.0/)に基づいており、
+このプロジェクトは[セマンティックバージョニング](https://semver.org/spec/v2.0.0.html)に準拠しています。
+
+## [1.2.1-hotfix] - 2025-08-16
+
+### 🔧 重要な修正と最終完成
+
+#### 修正項目
+- **構文エラー**: SearchService.jsの重複メソッド定義を解決
+- **初期化エラー**: main.jsの存在しないメソッド呼び出しを修正
+- **サービス初期化**: ShareDialogのサービス初期化タイミングを改善
+- **エラーハンドリング**: 包括的なサービス可用性チェックとリトライ機構を追加
+
+#### 機能強化
+- **検索履歴UI**: 視覚的表示と管理機能の完全実装
+- **ブックマーク管理**: カテゴリ管理を含む完全な編集・削除機能
+- **データセキュリティ**: 3ラウンド暗号化+ソルト実装（処理時間<10ms）
+- **アクセシビリティ**: キーボードナビゲーションを含むWCAG 2.1 AA完全準拠
+- **エラー回復**: 自動リトライ、フォールバック、ユーザー通知システム
+
+#### テスト・品質保証
+- **完全テストスイート**: 48/48テスト成功（100%成功率）
+- **品質保証**: "Production Ready Plus"ステータス達成
+- **回帰テスト**: 既存機能への影響なしを確認
+- **統合テスト**: 全機能の協調動作を検証
+
+#### ドキュメント更新
+- **要件定義**: 100%実装完了を反映して更新
+- **設計書**: アーキテクチャ修正とセキュリティ強化を追加
+- **技術仕様**: セキュリティとアクセシビリティ仕様を強化
+- **テスト結果**: 全48テストケースの完全実行結果
+- **README**: 最終プロジェクト完了状況を更新
+
+### 🎯 最終品質指標
+
+#### 機能品質
+- **機能完成度**: 100%（10/10主要機能完了）
+- **テスト成功率**: 100%（48/48テスト成功）
+- **バグ密度**: 0件/KLOC
+- **機能カバレッジ**: 100%
+
+#### 非機能品質
+- **パフォーマンス**: 92/100点（目標80点以上 ✅）
+- **セキュリティ**: 強化レベル（暗号化実装 ✅）
+- **アクセシビリティ**: WCAG 2.1 AA完全準拠 ✅
+- **ユーザビリティ**: 4.7/5.0スコア（目標4.0以上 ✅）
+
+#### 技術品質
+- **コード品質**: Production Ready Plus
+- **ドキュメント完備率**: 100%
+- **保守性**: 高（モジュラー設計）
+- **拡張性**: 高（プラグイン対応アーキテクチャ）
+
+### 🚀 最終リリース判定
+
+**最終判定**: ✅ **Production Ready Plus - 即座リリース推奨**
+
+#### リリース承認基準
+- [x] 機能要件100%達成
+- [x] 非機能要件100%達成
+- [x] セキュリティ要件強化完了
+- [x] アクセシビリティ要件完全達成
+- [x] 品質要件超過達成
+- [x] ドキュメント完備
+- [x] テスト100%成功
+- [x] エラー0件
+- [x] パフォーマンス目標達成
+- [x] 本番環境準備完了
+
+#### 達成サマリー
+- **100%機能実装**: 計画された全機能が完成
+- **100%テスト成功**: 品質保証完了
+- **セキュリティ強化**: 3ラウンド暗号化実装
+- **完全アクセシビリティ**: WCAG 2.1 AA準拠
+- **エラーハンドリング**: 安定性のための完全実装
+- **高品質コード**: Production Ready Plus評価
+
+### 🎉 プロジェクト完了宣言
+
+**Kiro OSS Map v1.2.1** は全ての開発、テスト、品質保証が完了し、最高品質レベルの **Production Ready Plus** を達成しました。
+
+#### 次のステップ
+1. **本番環境デプロイ**: 実際のサービス提供開始
+2. **ユーザーフィードバック収集**: 改善機会の特定
+3. **継続的監視**: パフォーマンス・エラー監視
+4. **機能拡張計画**: 新機能追加の検討
+
+---
 
 ## [1.2.1] - 2025-08-15
 
-### 🎉 Major Improvements
+### 🎉 主要な改善
 
-#### Added
-- **Enhanced Security**: 3-round encryption with salt for local data protection
-- **Complete Bookmark Management**: Full CRUD operations for bookmarks and categories
-- **Search History UI**: Visual search history display and management
-- **Keyboard Navigation**: Complete keyboard accessibility support
-- **Category Management**: Color-coded bookmark categories with full management
-- **Accessibility Compliance**: WCAG 2.1 AA standard compliance
+#### 追加機能
+- **セキュリティ強化**: ローカルデータ保護のための3ラウンド暗号化+ソルト
+- **完全ブックマーク管理**: ブックマークとカテゴリの完全CRUD操作
+- **検索履歴UI**: 視覚的検索履歴表示と管理
+- **キーボードナビゲーション**: 完全なキーボードアクセシビリティサポート
+- **カテゴリ管理**: 完全管理機能付きカラーコード化ブックマークカテゴリ
+- **アクセシビリティ準拠**: WCAG 2.1 AA標準準拠
 
-#### Enhanced
-- **Data Encryption**: Upgraded from simple XOR to 3-round encryption with salt
-- **Security Score**: Improved from 70% to 95%
-- **Accessibility Score**: Achieved 100% (up from 85%)
-- **User Experience**: Enhanced bookmark editing, deletion, and category management
-- **Search Experience**: Added visual search history with delete functionality
+#### 強化項目
+- **データ暗号化**: 単純XORから3ラウンド暗号化+ソルトにアップグレード
+- **セキュリティスコア**: 70%から95%に改善
+- **アクセシビリティスコア**: 100%達成（85%から向上）
+- **ユーザーエクスペリエンス**: ブックマーク編集、削除、カテゴリ管理の強化
+- **検索エクスペリエンス**: 削除機能付き視覚的検索履歴を追加
 
-#### Fixed
-- **BUG-004**: Data encryption implementation completed
-- **BUG-006**: Bookmark edit/delete functionality fully implemented
-- **Syntax Errors**: Resolved JavaScript syntax issues in main.js
-- **UI Responsiveness**: Fixed bookmark panel UI display issues
-- **Search History**: Completed search history UI implementation
+#### 修正項目
+- **BUG-004**: データ暗号化実装完了
+- **BUG-006**: ブックマーク編集・削除機能完全実装
+- **構文エラー**: main.jsのJavaScript構文問題を解決
+- **UIレスポンシブ**: ブックマークパネルUI表示問題を修正
+- **検索履歴**: 検索履歴UI実装完了
 
-#### Technical Improvements
-- **Code Quality**: Cleaned up main.js file structure
-- **Error Handling**: Improved error handling and user feedback
-- **Performance**: Optimized encryption/decryption performance
-- **Compatibility**: Enhanced browser compatibility and fallback support
+#### 技術改善
+- **コード品質**: main.jsファイル構造のクリーンアップ
+- **エラーハンドリング**: エラーハンドリングとユーザーフィードバックの改善
+- **パフォーマンス**: 暗号化・復号化パフォーマンスの最適化
+- **互換性**: ブラウザ互換性とフォールバックサポートの強化
 
-### 🧪 Testing
-- **Test Coverage**: Achieved 100% test success rate
-- **New Test Cases**: Added TS-034 through TS-037 for new features
-- **Quality Assurance**: Reached "Production Ready Plus" quality level
-- **Performance Testing**: All performance metrics within target ranges
+### 🧪 テスト
+- **テストカバレッジ**: 100%テスト成功率達成
+- **新規テストケース**: 新機能用TS-034からTS-037を追加
+- **品質保証**: "Production Ready Plus"品質レベル到達
+- **パフォーマンステスト**: 全パフォーマンス指標が目標範囲内
 
-### 📚 Documentation
-- **Updated Requirements**: Reflected all completed features
-- **Enhanced Design Docs**: Added v1.2.1 improvements
-- **Technical Specifications**: Created comprehensive technical spec document
-- **Test Results**: Comprehensive test result documentation
+### 📚 ドキュメント
+- **要件更新**: 完了した全機能を反映
+- **設計書強化**: v1.2.1改善を追加
+- **技術仕様**: 包括的技術仕様書を作成
+- **テスト結果**: 包括的テスト結果ドキュメント
 
 ---
 
 ## [1.2.0] - 2025-08-15
 
-### Added
-- **Share Functionality**: Complete sharing system with multiple platforms
-- **QR Code Generation**: Generate QR codes for easy map sharing
-- **Native Share API**: Support for mobile native sharing
-- **Share History**: Track and manage shared content
-- **Social Media Integration**: Twitter, Facebook, LINE sharing support
+### 追加機能
+- **共有機能**: 複数プラットフォーム対応の完全共有システム
+- **QRコード生成**: 簡単マップ共有用QRコード生成
+- **ネイティブ共有API**: モバイルネイティブ共有サポート
+- **共有履歴**: 共有コンテンツの追跡と管理
+- **ソーシャルメディア統合**: Twitter、Facebook、LINE共有サポート
 
-### Enhanced
-- **UI/UX**: Improved user interface and experience
-- **Performance**: Optimized map rendering and interactions
-- **Mobile Support**: Enhanced mobile responsiveness
+### 強化項目
+- **UI/UX**: ユーザーインターフェースとエクスペリエンスの改善
+- **パフォーマンス**: マップレンダリングとインタラクションの最適化
+- **モバイルサポート**: モバイルレスポンシブ性の強化
 
-### Fixed
-- **BUG-001**: Search functionality implementation completed
-- **BUG-002**: Route search functionality implementation completed
-- **BUG-003**: Measurement tools implementation completed
+### 修正項目
+- **BUG-001**: 検索機能実装完了
+- **BUG-002**: ルート検索機能実装完了
+- **BUG-003**: 測定ツール実装完了
 
 ---
 
 ## [1.1.0] - 2025-08-14
 
-### Added
-- **Route Planning**: Multi-modal route calculation (driving, walking, cycling)
-- **Measurement Tools**: Distance and area measurement capabilities
-- **Bookmark System**: Save and organize favorite locations
-- **Search Enhancement**: Improved search with autocomplete
+### 追加機能
+- **ルート計画**: マルチモーダルルート計算（運転、徒歩、自転車）
+- **測定ツール**: 距離と面積測定機能
+- **ブックマークシステム**: お気に入り場所の保存と整理
+- **検索強化**: オートコンプリート付き検索改善
 
-### Enhanced
-- **Map Performance**: Faster tile loading and smoother interactions
-- **Dark Mode**: Improved dark theme implementation
-- **Responsive Design**: Better mobile and tablet support
+### 強化項目
+- **マップパフォーマンス**: より高速なタイル読み込みとスムーズなインタラクション
+- **ダークモード**: ダークテーマ実装の改善
+- **レスポンシブデザイン**: モバイルとタブレットサポートの向上
+
+---
+
+## [1.0.1] - 2025-08-13
+
+### 修正
+- **検索結果ピン表示問題** - 検索結果のピンが地図上に表示されない問題を修正
+  - `handleSearchSelect`内の`addMarker`関数呼び出しパラメータを修正
+  - 検索結果用の適切なマーカークリア機能を追加
+  - 詳細なポップアップデータを含む検索結果マーカーを強化
+  - ルートアクションボタン付きの検索結果リストUIを改善
+
+### 改善
+- **検索結果リストUI** - ビジュアルデザインと機能性を向上
+  - 検索結果用の琥珀色インジケータードットを追加
+  - 直接ルート設定用の「出発」「到着」ボタンを実装
+  - ホバー効果とレスポンシブデザインを強化
+  - ルートボタンの適切なイベントハンドリングを追加
+
+### 追加
+- **拡張検索結果マーカー** - 包括的なマーカーシステムを実装
+  - 検索結果用のカスタム黄色ドロップピンスタイル
+  - 位置情報、画像、アクションボタンを含む詳細ポップアップ
+  - WikipediaとUnsplashからの自動画像取得
+  - マーカーポップアップから直接ルート設定機能
+  - マーカーからの位置共有機能
 
 ---
 
 ## [1.0.0] - 2025-08-13
 
-### Added
-- **Initial Release**: Core map functionality
-- **Interactive Map**: OpenStreetMap-based mapping with MapLibre GL JS
-- **Basic Search**: Location and address search using Nominatim API
-- **Layer Control**: Switch between standard, satellite, and terrain views
-- **Geolocation**: Current location detection and display
-- **Theme Support**: Light and dark mode toggle
-- **Internationalization**: Japanese and English language support
-- **PWA Features**: Progressive Web App capabilities
+### 追加機能
+- **初回リリース**: コアマップ機能
+- **インタラクティブマップ**: MapLibre GL JSベースのOpenStreetMapマッピング
+- **基本検索**: Nominatim APIを使用した位置・住所検索
+- **レイヤーコントロール**: 標準、衛星、地形ビューの切り替え
+- **位置情報**: 現在地検出と表示
+- **テーマサポート**: ライト・ダークモード切り替え
+- **国際化**: 日本語・英語言語サポート
+- **PWA機能**: プログレッシブウェブアプリ機能
 
-### Technical Foundation
-- **Modern Architecture**: ES6+ modules with clean separation of concerns
-- **Service-Oriented Design**: Modular service architecture
-- **Event-Driven**: EventBus pattern for component communication
-- **Responsive UI**: Tailwind CSS for modern, responsive design
-- **Local Storage**: Client-side data persistence
-
----
-
-## Development Milestones
-
-### Quality Metrics Evolution
-
-| Version | Functionality | Security | Accessibility | Performance | Overall |
-|---------|---------------|----------|---------------|-------------|---------|
-| 1.0.0   | 70%          | 50%      | 60%          | 80%         | 65%     |
-| 1.1.0   | 85%          | 60%      | 70%          | 85%         | 75%     |
-| 1.2.0   | 90%          | 70%      | 85%          | 90%         | 84%     |
-| 1.2.1   | 100%         | 95%      | 100%         | 95%         | 97%     |
-
-### Feature Completion Timeline
-
-- **2025-08-13**: Core mapping functionality
-- **2025-08-14**: Route planning and measurement tools
-- **2025-08-15 AM**: Share functionality and social integration
-- **2025-08-15 PM**: Security enhancement and accessibility compliance
-
-### Security Enhancements
-
-#### v1.2.1 Security Improvements
-- **Encryption Algorithm**: Upgraded to 3-round XOR with salt
-- **Key Derivation**: Browser fingerprint + PBKDF2-style derivation
-- **Data Protection**: All sensitive data automatically encrypted
-- **Backward Compatibility**: Seamless migration from previous versions
-
-#### Encrypted Data Types
-- Bookmarks and categories
-- Search history
-- User preferences
-- Measurement history
-- Share history
-
-### Accessibility Achievements
-
-#### WCAG 2.1 AA Compliance
-- **Keyboard Navigation**: Complete keyboard control of all features
-- **Screen Reader Support**: Full ARIA implementation
-- **Color Contrast**: 4.5:1 minimum contrast ratio
-- **Focus Management**: Clear visual focus indicators
-- **Alternative Text**: Comprehensive alt text for all images
-
-#### Keyboard Shortcuts
-- Arrow keys: Map navigation
-- +/- keys: Zoom control
-- Home key: Return to default view
-- Enter key: Add marker at center
-- Escape key: Close modals/panels
-- Tab key: Navigate through interface elements
+### 技術基盤
+- **モダンアーキテクチャ**: 関心の分離を明確にしたES6+モジュール
+- **サービス指向設計**: モジュラーサービスアーキテクチャ
+- **イベント駆動**: コンポーネント通信用EventBusパターン
+- **レスポンシブUI**: モダンでレスポンシブなデザイン用Tailwind CSS
+- **ローカルストレージ**: クライアントサイドデータ永続化
 
 ---
 
-## Future Roadmap
+## 開発マイルストーン
 
-### v1.3.0 (Planned)
-- **Offline Support**: Enhanced PWA with offline map caching
-- **Advanced Analytics**: Usage statistics and performance monitoring
-- **Plugin System**: Extensible architecture for custom features
-- **Multi-language**: Additional language support
+### 品質指標の推移
 
-### v1.4.0 (Planned)
-- **Collaboration**: Real-time collaborative mapping
-- **Advanced Routing**: Traffic-aware routing and alternative routes
-- **Custom Layers**: User-defined map layers and overlays
-- **Export Features**: GPX, KML export functionality
+| バージョン | 機能性 | セキュリティ | アクセシビリティ | パフォーマンス | 総合 |
+|-----------|--------|-------------|-----------------|---------------|------|
+| 1.0.0     | 70%    | 50%         | 60%             | 80%           | 65%  |
+| 1.1.0     | 85%    | 60%         | 70%             | 85%           | 75%  |
+| 1.2.0     | 90%    | 70%         | 85%             | 90%           | 84%  |
+| 1.2.1     | 100%   | 95%         | 100%            | 95%           | 97%  |
 
----
+### 機能完成タイムライン
 
-## Contributing
+- **2025年8月13日**: コアマッピング機能
+- **2025年8月14日**: ルート計画と測定ツール
+- **2025年8月15日 午前**: 共有機能とソーシャル統合
+- **2025年8月15日 午後**: セキュリティ強化とアクセシビリティ準拠
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+### セキュリティ強化
 
-## License
+#### v1.2.1 セキュリティ改善
+- **暗号化アルゴリズム**: ソルト付き3ラウンドXORにアップグレード
+- **キー導出**: ブラウザフィンガープリント + PBKDF2スタイル導出
+- **データ保護**: 全機密データの自動暗号化
+- **後方互換性**: 以前のバージョンからのシームレス移行
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+#### 暗号化データタイプ
+- ブックマークとカテゴリ
+- 検索履歴
+- ユーザー設定
+- 測定履歴
+- 共有履歴
 
-## Acknowledgments
+### アクセシビリティ達成
 
-- OpenStreetMap contributors for map data
-- MapLibre GL JS team for the mapping library
-- Nominatim for geocoding services
-- OSRM for routing services
-- All contributors and testers who helped improve this project---
+#### WCAG 2.1 AA準拠
+- **キーボードナビゲーション**: 全機能の完全キーボード制御
+- **スクリーンリーダーサポート**: 完全ARIA実装
+- **カラーコントラスト**: 4.5:1最小コントラスト比
+- **フォーカス管理**: 明確な視覚的フォーカスインジケータ
+- **代替テキスト**: 全画像の包括的alt text
 
-
-## [1.2.1-hotfix] - 2025-08-16
-
-### 🔧 Critical Fixes & Final Completion
-
-#### Fixed
-- **Syntax Errors**: Resolved SearchService.js duplicate method definitions
-- **Initialization Errors**: Fixed main.js non-existent method calls
-- **Service Timing**: Improved ShareDialog service initialization timing
-- **Error Handling**: Added comprehensive service availability checks and retry mechanisms
-
-#### Enhanced
-- **Search History UI**: Complete implementation with visual display and management
-- **Bookmark Management**: Full edit/delete functionality with category management
-- **Data Security**: 3-round encryption + salt implementation (processing time <10ms)
-- **Accessibility**: Complete WCAG 2.1 AA compliance with keyboard navigation
-- **Error Recovery**: Automatic retry, fallback, and user notification systems
-
-#### Testing
-- **Complete Test Suite**: 48/48 tests successful (100% success rate)
-- **Quality Assurance**: Achieved "Production Ready Plus" status
-- **Regression Testing**: Confirmed no impact on existing functionality
-- **Integration Testing**: Verified all features work together seamlessly
-
-#### Documentation
-- **Requirements**: Updated to reflect 100% implementation completion
-- **Design**: Added architecture fixes and security enhancements
-- **Specifications**: Enhanced with security and accessibility specifications
-- **Test Results**: Complete test execution results for all 48 test cases
-- **README**: Updated with final project completion status
-
-### 🎯 Final Quality Metrics
-
-#### Functional Quality
-- **Feature Completeness**: 100% (10/10 major features completed)
-- **Test Success Rate**: 100% (48/48 tests successful)
-- **Bug Density**: 0 bugs/KLOC
-- **Feature Coverage**: 100%
-
-#### Non-Functional Quality
-- **Performance**: 92/100 points (target: 80+ ✅)
-- **Security**: Enhanced level (encryption implemented ✅)
-- **Accessibility**: WCAG 2.1 AA full compliance ✅
-- **Usability**: 4.7/5.0 score (target: 4.0+ ✅)
-
-#### Technical Quality
-- **Code Quality**: Production Ready Plus
-- **Documentation Coverage**: 100%
-- **Maintainability**: High (modular design)
-- **Extensibility**: High (plugin-ready architecture)
-
-### 🚀 Final Release Status
-
-**Final Judgment**: ✅ **Production Ready Plus - Immediate Release Recommended**
-
-#### Release Approval Criteria
-- [x] 100% functional requirements achieved
-- [x] 100% non-functional requirements achieved
-- [x] Enhanced security requirements completed
-- [x] Complete accessibility compliance achieved
-- [x] Quality requirements exceeded
-- [x] Complete documentation
-- [x] 100% test success
-- [x] Zero errors
-- [x] Performance targets achieved
-- [x] Production environment ready
-
-#### Achievement Summary
-- **100% Feature Implementation**: All planned features completed
-- **100% Test Success**: Quality assurance completed
-- **Security Enhancement**: 3-round encryption implementation
-- **Complete Accessibility**: WCAG 2.1 AA compliance
-- **Error Handling**: Complete implementation for stability
-- **High-Quality Code**: Production Ready Plus evaluation
-
-### 🎉 Project Completion Declaration
-
-**Kiro OSS Map v1.2.1** has completed all development, testing, and quality assurance, achieving the highest quality level of **Production Ready Plus**.
-
-#### Next Steps
-1. **Production Deployment**: Begin actual service delivery
-2. **User Feedback Collection**: Identify improvement opportunities
-3. **Continuous Monitoring**: Performance and error monitoring
-4. **Feature Expansion Planning**: Consider new feature additions
+#### キーボードショートカット
+- 矢印キー: マップナビゲーション
+- +/-キー: ズーム制御
+- Homeキー: デフォルトビューに戻る
+- Enterキー: 中央にマーカー追加
+- Escapeキー: モーダル・パネルを閉じる
+- Tabキー: インターフェース要素間のナビゲーション
 
 ---
 
-**Final Update**: 2025-08-16 12:30:00  
-**Project Status**: ✅ 100% Complete  
-**Quality Level**: Production Ready Plus  
-**Release Approval**: Immediate Release Recommended
+## 今後のロードマップ
+
+### v1.3.0（計画中）
+- **オフラインサポート**: オフラインマップキャッシュ付き強化PWA
+- **高度な分析**: 使用統計とパフォーマンス監視
+- **プラグインシステム**: カスタム機能用拡張可能アーキテクチャ
+- **多言語**: 追加言語サポート
+
+### v1.4.0（計画中）
+- **コラボレーション**: リアルタイム協調マッピング
+- **高度なルーティング**: 交通状況対応ルーティングと代替ルート
+- **カスタムレイヤー**: ユーザー定義マップレイヤーとオーバーレイ
+- **エクスポート機能**: GPX、KMLエクスポート機能
+
+---
+
+## 貢献
+
+貢献を歓迎します！詳細は[貢献ガイドライン](CONTRIBUTING.md)をご覧ください。
+
+## ライセンス
+
+このプロジェクトはMITライセンスの下でライセンスされています - 詳細は[LICENSE](LICENSE)ファイルをご覧ください。
+
+## 謝辞
+
+- マップデータを提供するOpenStreetMap貢献者
+- マッピングライブラリを提供するMapLibre GL JSチーム
+- ジオコーディングサービスを提供するNominatim
+- ルーティングサービスを提供するOSRM
+- このプロジェクトの改善に協力したすべての貢献者とテスター
+
+---
+
+**最終更新**: 2025年8月16日 12:30:00  
+**プロジェクト状況**: ✅ 100%完成  
+**品質レベル**: Production Ready Plus  
+**リリース承認**: 即座リリース推奨
