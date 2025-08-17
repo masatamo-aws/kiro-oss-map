@@ -53,7 +53,12 @@ router.get('/styles/:styleId',
     const styleDefinition = getMapStyle(styleId);
     
     if (!styleDefinition) {
-      throw new ValidationError('Style not found');
+      res.status(404).json({
+        error: 'Style not found',
+        message: `Map style '${styleId}' does not exist`,
+        availableStyles: ['standard', 'satellite', 'terrain']
+      });
+      return;
     }
 
     res.json(styleDefinition);

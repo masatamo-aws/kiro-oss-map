@@ -17,7 +17,12 @@ router.get('/bookmarks',
     const userId = req.user?.id;
 
     if (!userId) {
-      throw new ValidationError('User authentication required');
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User authentication required',
+        hint: 'Include Authorization: Bearer <token> header'
+      });
+      return;
     }
 
     const resultLimit = Math.min(parseInt(limit as string) || 50, 100);

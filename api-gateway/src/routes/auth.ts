@@ -153,13 +153,21 @@ function generateRefreshToken(userId: string): string {
 }
 
 // Mock database functions (TODO: Replace with actual database calls)
+const mockUsers: any[] = [];
+
 async function findUserByEmail(email: string): Promise<any> {
-  // Mock implementation
-  if (email === 'test@example.com') {
+  // Check mock users first
+  const mockUser = mockUsers.find(user => user.email === email);
+  if (mockUser) {
+    return mockUser;
+  }
+
+  // Default test user
+  if (email === 'existing@example.com') {
     return {
       id: 'user-123',
-      email: 'test@example.com',
-      name: 'Test User',
+      email: 'existing@example.com',
+      name: 'Existing User',
       password: await bcrypt.hash('password123', 12), // password123
       organizationId: 'org-123',
       role: 'developer',
@@ -171,12 +179,18 @@ async function findUserByEmail(email: string): Promise<any> {
 }
 
 async function findUserById(userId: string): Promise<any> {
-  // Mock implementation
+  // Check mock users first
+  const mockUser = mockUsers.find(user => user.id === userId);
+  if (mockUser) {
+    return mockUser;
+  }
+
+  // Default test user
   if (userId === 'user-123') {
     return {
       id: 'user-123',
-      email: 'test@example.com',
-      name: 'Test User',
+      email: 'existing@example.com',
+      name: 'Existing User',
       organizationId: 'org-123',
       role: 'developer',
       isActive: true,
@@ -188,15 +202,21 @@ async function findUserById(userId: string): Promise<any> {
 
 async function createUser(userData: any): Promise<any> {
   // Mock implementation
-  return {
+  const newUser = {
     id: 'user-' + Date.now(),
     email: userData.email,
     name: userData.name,
+    password: userData.password,
     organizationId: 'org-' + Date.now(),
     role: 'developer',
     isActive: true,
     createdAt: new Date()
   };
+  
+  // Add to mock users array
+  mockUsers.push(newUser);
+  
+  return newUser;
 }
 
 async function updateLastLogin(userId: string): Promise<void> {

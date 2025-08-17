@@ -94,17 +94,16 @@ app.use('/api/v2/health', healthRoutes);
 // Authentication routes (no API key required)
 app.use('/api/v2/auth', authRoutes);
 
-// API key middleware for protected routes
-app.use('/api/v2', validateApiKey);
+// API key middleware for protected routes (except auth and health)
+app.use('/api/v2/maps', validateApiKey, mapsRoutes);
+app.use('/api/v2/search', validateApiKey, searchRoutes);
+app.use('/api/v2/routing', validateApiKey, routingRoutes);
 
-// Protected API routes
-app.use('/api/v2/maps', mapsRoutes);
-app.use('/api/v2/search', searchRoutes);
-app.use('/api/v2/routing', routingRoutes);
+// User routes (require JWT token, not API key)
 app.use('/api/v2/user', userRoutes);
 
-// API documentation endpoint
-app.get('/api/v2', (req, res) => {
+// API documentation endpoint (requires API key)
+app.get('/api/v2', validateApiKey, (req, res) => {
   res.json({
     name: 'Kiro OSS Map API Gateway',
     version: '2.0.0',

@@ -61,7 +61,7 @@ describe('Kiro OSS Map API Gateway', () => {
   describe('Authentication', () => {
     it('should register a new user', async () => {
       const userData = {
-        email: 'test@example.com',
+        email: `test-${Date.now()}@example.com`,
         password: 'password123',
         name: 'Test User',
         organizationName: 'Test Organization'
@@ -80,7 +80,7 @@ describe('Kiro OSS Map API Gateway', () => {
 
     it('should login with valid credentials', async () => {
       const loginData = {
-        email: 'test@example.com',
+        email: 'existing@example.com',
         password: 'password123'
       };
 
@@ -98,7 +98,7 @@ describe('Kiro OSS Map API Gateway', () => {
 
     it('should reject invalid credentials', async () => {
       const loginData = {
-        email: 'test@example.com',
+        email: 'existing@example.com',
         password: 'wrongpassword'
       };
 
@@ -117,7 +117,7 @@ describe('Kiro OSS Map API Gateway', () => {
         .expect(200);
 
       expect(response.body).toHaveProperty('user');
-      expect(response.body.user).toHaveProperty('email', 'test@example.com');
+      expect(response.body.user).toHaveProperty('email', 'existing@example.com');
     });
   });
 

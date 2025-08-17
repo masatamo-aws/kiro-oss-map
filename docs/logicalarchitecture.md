@@ -1,13 +1,13 @@
 # Kiro OSS Map - 論理アーキテクチャ
 
-**バージョン**: 1.3.0  
+**バージョン**: 2.0.0  
 **作成日**: 2025年8月13日  
-**最終更新**: 2025年8月17日 15:00:00  
+**最終更新**: 2025年8月17日 16:30:00 15:30:00  
 **実装状況**: 100%完了 ✅  
 **Phase A完了**: PWA強化・パフォーマンス最適化・品質チェック完了 ✅  
 **テスト結果**: 14/14テスト成功（成功率100%） ✅
 
-## 1. 実装済みシステム全体アーキテクチャ
+## 1. システム全体アーキテクチャ（実装完了）
 
 ```mermaid
 graph TB
@@ -266,56 +266,56 @@ graph LR
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer - 実装完了"
+    subgraph "Frontend"
         BROWSER[Web Browser]
-        APP[Kiro OSS Map v1.3.0<br/>SPA Application]
-        SW[Service Worker v1.3.0<br/>PWA & Caching]
+        APP[Kiro OSS Map v1.3.0]
+        SW[Service Worker v1.3.0]
     end
     
-    subgraph "Service Layer - 実装完了"
-        SEARCH_SVC[SearchService<br/>検索処理]
-        ROUTE_SVC[RouteService<br/>ルート計算]
-        MAP_SVC[MapService<br/>地図操作]
-        SHARE_SVC[ShareService<br/>共有機能]
-        IMAGE_SVC[ImageService<br/>画像取得]
-        OFFLINE_SVC[OfflineSearchService<br/>オフライン検索]
+    subgraph "Services"
+        SEARCH_SVC[SearchService]
+        ROUTE_SVC[RouteService]
+        MAP_SVC[MapService]
+        SHARE_SVC[ShareService]
+        IMAGE_SVC[ImageService]
+        OFFLINE_SVC[OfflineSearchService]
     end
     
-    subgraph "API Gateway v2.0.0 - 実装完了"
-        GATEWAY[API Gateway<br/>Express.js:3001]
+    subgraph "API Gateway"
+        GATEWAY[API Gateway Express.js]
         AUTH_MW[認証ミドルウェア]
         RATE_MW[レート制限]
         LOG_MW[ログ記録]
-        
-        GEOCODING_EP[/api/v2/geocoding<br/>ジオコーディング]
-        ROUTING_EP[/api/v2/routing<br/>ルーティング]
-        SEARCH_EP[/api/v2/search<br/>検索]
-        MAPS_EP[/api/v2/maps<br/>地図]
-        USER_EP[/api/v2/user<br/>ユーザー]
-        HEALTH_EP[/api/v2/health<br/>ヘルスチェック]
     end
     
-    subgraph "External APIs - 統合完了"
-        NOMINATIM[Nominatim API<br/>nominatim.openstreetmap.org<br/>ジオコーディング]
-        OSRM[OSRM API<br/>router.project-osrm.org<br/>ルーティング]
-        OSM_TILES[OpenStreetMap Tiles<br/>tile.openstreetmap.org<br/>地図タイル]
-        WIKI_API[Wikipedia API<br/>ja.wikipedia.org<br/>画像・情報]
-        UNSPLASH[Unsplash API<br/>api.unsplash.com<br/>フォールバック画像]
+    subgraph "Endpoints"
+        GEOCODING_EP[/api/v2/geocoding]
+        ROUTING_EP[/api/v2/routing]
+        SEARCH_EP[/api/v2/search]
+        MAPS_EP[/api/v2/maps]
+        USER_EP[/api/v2/user]
+        HEALTH_EP[/api/v2/health]
     end
     
-    subgraph "Storage Layer - 実装完了"
-        LOCAL_STORAGE[LocalStorage<br/>設定・履歴]
-        INDEXED_DB[IndexedDB<br/>オフラインデータ]
-        CACHE_API[Cache API<br/>リソースキャッシュ]
-        MEMORY_CACHE[Memory Cache<br/>一時データ]
+    subgraph "External APIs"
+        NOMINATIM[Nominatim API]
+        OSRM[OSRM API]
+        OSM_TILES[OpenStreetMap Tiles]
+        WIKI_API[Wikipedia API]
+        UNSPLASH[Unsplash API]
     end
     
-    %% Frontend connections
+    subgraph "Storage"
+        LOCAL_STORAGE[LocalStorage]
+        INDEXED_DB[IndexedDB]
+        CACHE_API[Cache API]
+        MEMORY_CACHE[Memory Cache]
+    end
+    
     BROWSER --> APP
     APP --> SW
     SW --> CACHE_API
     
-    %% Service connections
     APP --> SEARCH_SVC
     APP --> ROUTE_SVC
     APP --> MAP_SVC
@@ -323,7 +323,6 @@ graph TB
     APP --> IMAGE_SVC
     APP --> OFFLINE_SVC
     
-    %% API Gateway connections
     SEARCH_SVC --> GATEWAY
     ROUTE_SVC --> GATEWAY
     MAP_SVC --> GATEWAY
@@ -339,7 +338,6 @@ graph TB
     GATEWAY --> USER_EP
     GATEWAY --> HEALTH_EP
     
-    %% External API connections
     GEOCODING_EP --> NOMINATIM
     ROUTING_EP --> OSRM
     SEARCH_EP --> NOMINATIM
@@ -347,28 +345,10 @@ graph TB
     IMAGE_SVC --> WIKI_API
     IMAGE_SVC --> UNSPLASH
     
-    %% Storage connections
     SEARCH_SVC --> LOCAL_STORAGE
     OFFLINE_SVC --> INDEXED_DB
     SW --> CACHE_API
     SEARCH_SVC --> MEMORY_CACHE
-    
-    %% Offline connections
-    OFFLINE_SVC -.-> NOMINATIM
-    SW -.-> OSM_TILES
-    
-    %% Styling
-    classDef frontend fill:#e1f5fe
-    classDef service fill:#f3e5f5
-    classDef gateway fill:#fff3e0
-    classDef external fill:#e8f5e8
-    classDef storage fill:#fce4ec
-    
-    class BROWSER,APP,SW frontend
-    class SEARCH_SVC,ROUTE_SVC,MAP_SVC,SHARE_SVC,IMAGE_SVC,OFFLINE_SVC service
-    class GATEWAY,AUTH_MW,RATE_MW,LOG_MW,GEOCODING_EP,ROUTING_EP,SEARCH_EP,MAPS_EP,USER_EP,HEALTH_EP gateway
-    class NOMINATIM,OSRM,OSM_TILES,WIKI_API,UNSPLASH external
-    class LOCAL_STORAGE,INDEXED_DB,CACHE_API,MEMORY_CACHE storage
 ```
 
 ## 7. デプロイメントアーキテクチャ（実装完了）
@@ -709,21 +689,21 @@ graph TB
         FORMATTER[Format Engine]
     end
     
-    subgraph "Language Resources"
-        JA[Japanese (ja)]
-        EN[English (en)]
-        ZH[Chinese (zh)]
-        KO[Korean (ko)]
+    subgraph "Languages"
+        JA[Japanese]
+        EN[English]
+        ZH[Chinese]
+        KO[Korean]
     end
     
-    subgraph "Format Modules"
+    subgraph "Formatters"
         DATE[Date Formatter]
         NUMBER[Number Formatter]
         CURRENCY[Currency Formatter]
         PLURAL[Pluralization]
     end
     
-    subgraph "UI Components"
+    subgraph "UI"
         TEXT[Text Elements]
         LABELS[Form Labels]
         MESSAGES[Messages]
@@ -2215,21 +2195,21 @@ graph LR
 
 ```mermaid
 graph TB
-    subgraph "Online Search Flow"
+    subgraph "Online Flow"
         SEARCH_INPUT[Search Input]
         NOMINATIM[Nominatim API]
         RESULTS[Search Results]
         CACHE_STORE[Cache to IndexedDB]
     end
     
-    subgraph "Offline Search Flow"
-        OFFLINE_INPUT[Search Input (Offline)]
+    subgraph "Offline Flow"
+        OFFLINE_INPUT[Search Input Offline]
         IDB_QUERY[IndexedDB Query]
         FUZZY_SEARCH[Fuzzy Search Engine]
         CACHED_RESULTS[Cached Results]
     end
     
-    subgraph "IndexedDB Structure"
+    subgraph "Storage"
         DB[KiroOSSMapOffline]
         SEARCH_DATA[searchData Store]
         SEARCH_INDEX[searchIndex Store]
@@ -2299,39 +2279,39 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph "User Layer"
+    subgraph "Users"
         USER[End Users]
-        DEVICES[Multi-Device Support<br/>Desktop/Tablet/Mobile]
+        DEVICES[Multi-Device Support]
     end
     
-    subgraph "Browser Layer"
-        MODERN[Modern Browsers 95%+]
+    subgraph "Browsers"
+        MODERN[Modern Browsers]
         LEGACY[Legacy Browser Support]
         POLYFILL[Auto Polyfill Loading]
     end
     
-    subgraph "Application Layer - v1.3.0"
+    subgraph "Application"
         MAIN[Main Application]
         SW[Service Worker v1.3.0]
         COMPONENTS[Web Components]
         SERVICES[Service Layer]
     end
     
-    subgraph "New Services v1.3.0"
+    subgraph "New Services"
         IMG_SVC[ImageOptimizationService]
         OFFLINE_SVC[OfflineSearchService]
         COMPAT_SVC[BrowserCompatibilityService]
     end
     
-    subgraph "Storage Layer"
+    subgraph "Storage"
         MEMORY[Memory Cache]
-        LOCAL[Local Storage (Encrypted)]
-        IDB[IndexedDB (Search Cache)]
+        LOCAL[Local Storage]
+        IDB[IndexedDB]
         SW_CACHE[Service Worker Cache]
     end
     
-    subgraph "Network Layer"
-        CDN[CDN (Polyfills)]
+    subgraph "Network"
+        CDN[CDN Polyfills]
         OSM[OpenStreetMap APIs]
         NOMINATIM[Nominatim Geocoding]
         OSRM[OSRM Routing]

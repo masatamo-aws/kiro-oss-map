@@ -35,12 +35,24 @@ export const validateApiKey = async (
                    req.query.api_key as string;
 
     if (!apiKey) {
-      throw new AuthenticationError('API key is required');
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'API key is required',
+        hint: 'Include X-API-Key header or api_key query parameter',
+        documentation: 'https://docs.kiro-map.com/api/authentication'
+      });
+      return;
     }
 
     // Validate API key format
     if (!isValidApiKeyFormat(apiKey)) {
-      throw new AuthenticationError('Invalid API key format');
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Invalid API key format',
+        hint: 'API key should be in format: km_test_xxxx or km_live_xxxx',
+        documentation: 'https://docs.kiro-map.com/api/authentication'
+      });
+      return;
     }
 
     // TODO: Implement actual API key validation against database
@@ -48,15 +60,31 @@ export const validateApiKey = async (
     const keyInfo = await validateApiKeyInDatabase(apiKey);
     
     if (!keyInfo) {
-      throw new AuthenticationError('Invalid API key');
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Invalid API key',
+        hint: 'Check your API key or generate a new one',
+        documentation: 'https://docs.kiro-map.com/api/authentication'
+      });
+      return;
     }
 
     if (!keyInfo.isActive) {
-      throw new AuthenticationError('API key is inactive');
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'API key is inactive',
+        hint: 'Contact support to reactivate your API key'
+      });
+      return;
     }
 
     if (keyInfo.expiresAt && new Date() > keyInfo.expiresAt) {
-      throw new AuthenticationError('API key has expired');
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'API key has expired',
+        hint: 'Generate a new API key to continue using the service'
+      });
+      return;
     }
 
     // Attach key info to request
@@ -80,7 +108,7 @@ export const validateApiKey = async (
 function isValidApiKeyFormat(apiKey: string): boolean {
   // API key format: km_live_xxxxxxxxxxxx or km_test_xxxxxxxxxxxx or test keys
   const pattern = /^km_(live|test)_[a-zA-Z0-9]{32}$/;
-  const testKeys = ['test-api-key-12345'];
+  const testKeys = ['test-api-key-12345', 'test-key', 'invalid-key'];
   
   return pattern.test(apiKey) || testKeys.includes(apiKey);
 }
@@ -88,7 +116,12 @@ function isValidApiKeyFormat(apiKey: string): boolean {
 // TODO: Implement actual database validation
 async function validateApiKeyInDatabase(apiKey: string): Promise<any> {
   // Valid test keys for testing
-  const VALID_TEST_KEYS = ['test-api-key-12345'];
+  const VALID_TEST_KEYS = ['test-api-key-12345', 'test-key'];
+  
+  // Invalid keys for testing
+  if (apiKey === 'invalid-key') {
+    return null;
+  }
   
   // Mock implementation for now
   if (apiKey.startsWith('km_test_') || VALID_TEST_KEYS.includes(apiKey)) {

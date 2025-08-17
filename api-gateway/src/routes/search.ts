@@ -15,7 +15,12 @@ router.get('/geocode',
     const { q, limit = 10 } = req.query;
 
     if (!q) {
-      throw new ValidationError('Query parameter "q" is required');
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'Query parameter "q" is required',
+        example: '/api/v2/search/geocode?q=Tokyo Station'
+      });
+      return;
     }
 
     const query = q as string;
@@ -86,7 +91,12 @@ router.get('/autocomplete',
     const { q, limit = 5 } = req.query;
 
     if (!q) {
-      throw new ValidationError('Query parameter "q" is required');
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'Query parameter "q" is required',
+        example: '/api/v2/search/autocomplete?q=Tokyo'
+      });
+      return;
     }
 
     const query = q as string;

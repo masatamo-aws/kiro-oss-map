@@ -5,7 +5,11 @@
 import dotenv from 'dotenv';
 
 // Load environment variables
-dotenv.config();
+if (process.env.NODE_ENV === 'test') {
+  dotenv.config({ path: '.env.test' });
+} else {
+  dotenv.config();
+}
 
 interface Config {
   env: string;
@@ -124,5 +128,7 @@ if (missingEnvVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingEnvVars);
   if (process.env['NODE_ENV'] === 'production') {
     process.exit(1);
+  } else if (process.env['NODE_ENV'] !== 'test') {
+    console.warn('⚠️  Using default values for missing environment variables in development');
   }
 }

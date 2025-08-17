@@ -16,12 +16,33 @@ router.post('/calculate',
 
     // Validate required parameters
     if (!origin || !destination) {
-      throw new ValidationError('Origin and destination are required');
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'Origin and destination are required',
+        example: {
+          origin: [139.7671, 35.6812],
+          destination: [139.6917, 35.6895],
+          profile: 'driving'
+        }
+      });
+      return;
     }
 
     // Validate coordinates
-    validateCoordinates(origin, 'origin');
-    validateCoordinates(destination, 'destination');
+    try {
+      validateCoordinates(origin, 'origin');
+      validateCoordinates(destination, 'destination');
+    } catch (error) {
+      res.status(400).json({
+        error: 'Bad Request',
+        message: error instanceof Error ? error.message : 'Invalid coordinates',
+        example: {
+          origin: [139.7671, 35.6812],
+          destination: [139.6917, 35.6895]
+        }
+      });
+      return;
+    }
 
     // Mock route calculation
     const mockRoute = {
