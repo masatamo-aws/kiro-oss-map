@@ -262,55 +262,116 @@ graph LR
     PWASERVICE --> STORAGESERVICE
 ```
 
-## 5. API統合アーキテクチャ（実装完了）
+## 6. API統合アーキテクチャ（実装完了）
 
 ```mermaid
 graph TB
-    subgraph "Kiro OSS Map Frontend"
-        APP[Application Layer]
-        SERVICES[Service Layer]
-        CACHE[Cache Layer]
+    subgraph "Frontend Layer - 実装完了"
+        BROWSER[Web Browser]
+        APP[Kiro OSS Map v1.3.0<br/>SPA Application]
+        SW[Service Worker v1.3.0<br/>PWA & Caching]
     end
     
-    subgraph "Backend API Server - 実装完了"
-        EXPRESS[Express.js<br/>Port: 8080]
-        GEOCODING[/api/v1/geocoding]
-        ROUTING[/api/v1/routing]
-        SHARE[/api/v1/share]
-        HEALTH[/api/v1/health]
+    subgraph "Service Layer - 実装完了"
+        SEARCH_SVC[SearchService<br/>検索処理]
+        ROUTE_SVC[RouteService<br/>ルート計算]
+        MAP_SVC[MapService<br/>地図操作]
+        SHARE_SVC[ShareService<br/>共有機能]
+        IMAGE_SVC[ImageService<br/>画像取得]
+        OFFLINE_SVC[OfflineSearchService<br/>オフライン検索]
+    end
+    
+    subgraph "API Gateway v2.0.0 - 実装完了"
+        GATEWAY[API Gateway<br/>Express.js:3001]
+        AUTH_MW[認証ミドルウェア]
+        RATE_MW[レート制限]
+        LOG_MW[ログ記録]
+        
+        GEOCODING_EP[/api/v2/geocoding<br/>ジオコーディング]
+        ROUTING_EP[/api/v2/routing<br/>ルーティング]
+        SEARCH_EP[/api/v2/search<br/>検索]
+        MAPS_EP[/api/v2/maps<br/>地図]
+        USER_EP[/api/v2/user<br/>ユーザー]
+        HEALTH_EP[/api/v2/health<br/>ヘルスチェック]
     end
     
     subgraph "External APIs - 統合完了"
-        NOMINATIM_API[Nominatim<br/>nominatim.openstreetmap.org]
-        OSRM_API[OSRM<br/>router.project-osrm.org]
-        WIKI_API[Wikipedia API<br/>ja.wikipedia.org]
-        UNSPLASH_API[Unsplash API<br/>api.unsplash.com]
-        OSM_TILES[OSM Tiles<br/>tile.openstreetmap.org]
+        NOMINATIM[Nominatim API<br/>nominatim.openstreetmap.org<br/>ジオコーディング]
+        OSRM[OSRM API<br/>router.project-osrm.org<br/>ルーティング]
+        OSM_TILES[OpenStreetMap Tiles<br/>tile.openstreetmap.org<br/>地図タイル]
+        WIKI_API[Wikipedia API<br/>ja.wikipedia.org<br/>画像・情報]
+        UNSPLASH[Unsplash API<br/>api.unsplash.com<br/>フォールバック画像]
     end
     
-    APP --> SERVICES
-    SERVICES --> CACHE
+    subgraph "Storage Layer - 実装完了"
+        LOCAL_STORAGE[LocalStorage<br/>設定・履歴]
+        INDEXED_DB[IndexedDB<br/>オフラインデータ]
+        CACHE_API[Cache API<br/>リソースキャッシュ]
+        MEMORY_CACHE[Memory Cache<br/>一時データ]
+    end
     
-    SERVICES --> EXPRESS
-    EXPRESS --> GEOCODING
-    EXPRESS --> ROUTING
-    EXPRESS --> SHARE
-    EXPRESS --> HEALTH
+    %% Frontend connections
+    BROWSER --> APP
+    APP --> SW
+    SW --> CACHE_API
     
-    GEOCODING --> NOMINATIM_API
-    ROUTING --> OSRM_API
+    %% Service connections
+    APP --> SEARCH_SVC
+    APP --> ROUTE_SVC
+    APP --> MAP_SVC
+    APP --> SHARE_SVC
+    APP --> IMAGE_SVC
+    APP --> OFFLINE_SVC
     
-    SERVICES --> WIKI_API
-    SERVICES --> UNSPLASH_API
-    SERVICES --> OSM_TILES
+    %% API Gateway connections
+    SEARCH_SVC --> GATEWAY
+    ROUTE_SVC --> GATEWAY
+    MAP_SVC --> GATEWAY
     
-    CACHE -.-> NOMINATIM_API
-    CACHE -.-> OSRM_API
-    CACHE -.-> WIKI_API
-    CACHE -.-> UNSPLASH_API
+    GATEWAY --> AUTH_MW
+    GATEWAY --> RATE_MW
+    GATEWAY --> LOG_MW
+    
+    GATEWAY --> GEOCODING_EP
+    GATEWAY --> ROUTING_EP
+    GATEWAY --> SEARCH_EP
+    GATEWAY --> MAPS_EP
+    GATEWAY --> USER_EP
+    GATEWAY --> HEALTH_EP
+    
+    %% External API connections
+    GEOCODING_EP --> NOMINATIM
+    ROUTING_EP --> OSRM
+    SEARCH_EP --> NOMINATIM
+    MAP_SVC --> OSM_TILES
+    IMAGE_SVC --> WIKI_API
+    IMAGE_SVC --> UNSPLASH
+    
+    %% Storage connections
+    SEARCH_SVC --> LOCAL_STORAGE
+    OFFLINE_SVC --> INDEXED_DB
+    SW --> CACHE_API
+    SEARCH_SVC --> MEMORY_CACHE
+    
+    %% Offline connections
+    OFFLINE_SVC -.-> NOMINATIM
+    SW -.-> OSM_TILES
+    
+    %% Styling
+    classDef frontend fill:#e1f5fe
+    classDef service fill:#f3e5f5
+    classDef gateway fill:#fff3e0
+    classDef external fill:#e8f5e8
+    classDef storage fill:#fce4ec
+    
+    class BROWSER,APP,SW frontend
+    class SEARCH_SVC,ROUTE_SVC,MAP_SVC,SHARE_SVC,IMAGE_SVC,OFFLINE_SVC service
+    class GATEWAY,AUTH_MW,RATE_MW,LOG_MW,GEOCODING_EP,ROUTING_EP,SEARCH_EP,MAPS_EP,USER_EP,HEALTH_EP gateway
+    class NOMINATIM,OSRM,OSM_TILES,WIKI_API,UNSPLASH external
+    class LOCAL_STORAGE,INDEXED_DB,CACHE_API,MEMORY_CACHE storage
 ```
 
-## 6. デプロイメントアーキテクチャ（実装完了）
+## 7. デプロイメントアーキテクチャ（実装完了）
 
 ```mermaid
 graph TB
@@ -355,7 +416,7 @@ graph TB
     DEV_VITE --> CONSOLE_LOG
 ```
 
-## 7. セキュリティアーキテクチャ（実装完了）
+## 8. セキュリティアーキテクチャ（実装完了）
 
 ```mermaid
 graph TB
