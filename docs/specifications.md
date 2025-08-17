@@ -2,9 +2,10 @@
 
 **バージョン**: 1.3.0  
 **作成日**: 2025年8月13日  
-**最終更新**: 2025年8月16日 14:30:00  
+**最終更新**: 2025年8月17日 15:00:00  
 **実装状況**: 100%完了 ✅  
-**Phase A完了**: PWA強化・パフォーマンス最適化 ✅
+**Phase A完了**: PWA強化・パフォーマンス最適化・品質チェック完了 ✅  
+**テスト結果**: 14/14テスト成功（成功率100%） ✅
 
 ## 1. 実装済み技術スタック
 
@@ -199,9 +200,153 @@ databases:
     storage: "SSD 100GB+"
 ```
 
-## 2. API仕様
+## 2. v1.3.0 新機能技術仕様
 
-### 2.1 REST API エンドポイント
+### 2.1 PWA機能強化仕様
+
+#### Service Worker v1.3.0
+```javascript
+// キャッシュ戦略
+const CACHE_STRATEGIES = {
+  static: 'Cache First',           // アプリケーションファイル
+  dynamic: 'Network First',        // API レスポンス
+  tiles: 'Cache First + BG Update', // 地図タイル
+  images: 'Cache First'            // 画像リソース
+};
+
+// キャッシュ名
+const CACHE_NAMES = {
+  static: 'static-v1.3.0',
+  dynamic: 'dynamic-v1.3.0',
+  tiles: 'tiles-v1.3.0'
+};
+```
+
+#### オフライン機能仕様
+```yaml
+offline_capabilities:
+  maps:
+    - cached_tiles: "zoom 0-16"
+    - fallback_tiles: "low resolution"
+    - offline_duration: "7 days"
+  
+  search:
+    - cached_results: "last 100 queries"
+    - fuzzy_matching: "enabled"
+    - autocomplete: "offline capable"
+  
+  ui:
+    - full_functionality: "available"
+    - offline_indicator: "status display"
+    - sync_notification: "on reconnect"
+```
+
+### 2.2 画像最適化仕様
+
+#### 対応フォーマット
+```javascript
+const SUPPORTED_FORMATS = {
+  webp: 'primary',      // 70% smaller than JPEG
+  avif: 'next-gen',     // 50% smaller than WebP
+  jpeg2000: 'safari',   // Safari fallback
+  jpeg: 'universal'     // Universal fallback
+};
+
+// 最適化パラメータ
+const OPTIMIZATION_PARAMS = {
+  quality: 80,          // Default quality
+  max_width: 1920,      // Max width
+  max_height: 1080,     // Max height
+  dpr_aware: true       // Device pixel ratio
+};
+```
+
+#### 遅延読み込み仕様
+```yaml
+lazy_loading:
+  trigger: "IntersectionObserver"
+  threshold: 0.01
+  root_margin: "50px 0px"
+  
+  fallback:
+    - no_intersection_observer: "immediate load"
+    - slow_connection: "reduced quality"
+```
+
+### 2.3 ブラウザ互換性仕様
+
+#### サポートブラウザ
+```yaml
+browser_support:
+  chrome: ">=80"
+  firefox: ">=75"
+  safari: ">=13"
+  edge: ">=80"
+  
+  mobile:
+    chrome_mobile: ">=80"
+    safari_mobile: ">=13"
+    samsung_internet: ">=12"
+```
+
+#### Polyfill仕様
+```javascript
+const POLYFILLS = {
+  webcomponents: {
+    condition: '!window.customElements',
+    url: 'webcomponents-bundle.js'
+  },
+  intersection_observer: {
+    condition: '!window.IntersectionObserver',
+    url: 'intersection-observer.js'
+  },
+  resize_observer: {
+    condition: '!window.ResizeObserver',
+    url: 'resize-observer.js'
+  }
+};
+```
+
+### 2.4 オフライン検索仕様
+
+#### IndexedDB スキーマ
+```javascript
+const DB_SCHEMA = {
+  name: 'KiroOSSMapOffline',
+  version: 1,
+  stores: {
+    searchData: {
+      keyPath: 'id',
+      indexes: ['name', 'category', 'location']
+    },
+    searchIndex: {
+      keyPath: 'term'
+    }
+  }
+};
+```
+
+#### 検索アルゴリズム
+```yaml
+search_algorithm:
+  exact_match:
+    priority: 1
+    method: "direct query lookup"
+  
+  fuzzy_search:
+    priority: 2
+    method: "substring matching"
+    scoring: "relevance + importance"
+  
+  autocomplete:
+    max_suggestions: 10
+    min_length: 2
+    debounce: 300ms
+```
+
+## 3. API仕様
+
+### 3.1 REST API エンドポイント
 
 #### 2.1.1 タイル配信API
 ```yaml
@@ -3469,4 +3614,783 @@ deployment_spec:
 **最終更新**: 2025年8月16日 14:30:00  
 **対象システム**: Kiro OSS Map v1.3.0  
 **仕様完成度**: 100%  
-**実装準拠率**: 100%
+**実装準拠率**: 100%---
+
+##
+ 🚀 v2.0.0 Phase B 技術仕様：API・プラットフォーム拡張
+
+### 11.1 API Gateway 技術仕様
+
+#### 11.1.1 RESTful API 仕様
+```yaml
+# OpenAPI 3.0 Specification
+openapi: 3.0.3
+info:
+  title: Kiro OSS Map API
+  version: 2.0.0
+  description: 開発者向け地図API
+  
+servers:
+  - url: https://api.kiro-map.com/v2
+    description: Production API
+  - url: https://staging-api.kiro-map.com/v2
+    description: Staging API
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /maps/tiles/{z}/{x}/{y}:
+    get:
+      summary: 地図タイル取得
+      parameters:
+        - name: z
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 18
+        - name: style
+          in: query
+          schema:
+            type: string
+            enum: [standard, satellite, terrain]
+            default: standard
+      responses:
+        '200':
+          description: 地図タイル画像
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+
+  /search/geocode:
+    get:
+      summary: ジオコーディング検索
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 255
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: bounds
+          in: query
+          schema:
+            type: string
+            pattern: '^-?\d+\.?\d*,-?\d+\.?\d*,-?\d+\.?\d*,-?\d+\.?\d*$'
+      responses:
+        '200':
+          description: 検索結果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResults'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SearchResults:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        total:
+          type: integer
+        query:
+          type: string
+    
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        category:
+          type: string
+        importance:
+          type: number
+          minimum: 0
+          maximum: 1
+    
+    Coordinates:
+      type: object
+      properties:
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+```
+
+#### 11.1.2 GraphQL API 仕様
+```graphql
+# GraphQL Schema Definition
+type Query {
+  # 地図関連
+  mapStyles: [MapStyle!]!
+  mapTile(z: Int!, x: Int!, y: Int!, style: String = "standard"): String
+  
+  # 検索関連
+  geocode(query: String!, limit: Int = 10, bounds: BoundsInput): SearchResults!
+  autocomplete(query: String!, limit: Int = 5): [String!]!
+  
+  # ルート関連
+  calculateRoute(
+    origin: CoordinatesInput!
+    destination: CoordinatesInput!
+    profile: RouteProfile = DRIVING
+    alternatives: Boolean = false
+  ): RouteResult!
+  
+  # ユーザーデータ
+  userBookmarks(userId: ID!): [Bookmark!]!
+  userSearchHistory(userId: ID!, limit: Int = 20): [SearchHistoryItem!]!
+}
+
+type Mutation {
+  # ユーザーデータ操作
+  createBookmark(input: BookmarkInput!): Bookmark!
+  updateBookmark(id: ID!, input: BookmarkInput!): Bookmark!
+  deleteBookmark(id: ID!): Boolean!
+  
+  # 共有機能
+  createShare(input: ShareInput!): Share!
+  
+  # ユーザー設定
+  updateUserPreferences(userId: ID!, preferences: UserPreferencesInput!): UserPreferences!
+}
+
+type Subscription {
+  # リアルタイム更新
+  routeUpdates(routeId: ID!): RouteUpdate!
+  userLocationUpdates(userId: ID!): LocationUpdate!
+}
+
+# 型定義
+type MapStyle {
+  id: ID!
+  name: String!
+  description: String
+  previewUrl: String
+  isDefault: Boolean!
+}
+
+type SearchResults {
+  results: [SearchResult!]!
+  total: Int!
+  query: String!
+  executionTime: Float!
+}
+
+type SearchResult {
+  id: ID!
+  name: String!
+  address: String
+  coordinates: Coordinates!
+  category: String
+  importance: Float!
+  boundingBox: BoundingBox
+}
+
+type Coordinates {
+  latitude: Float!
+  longitude: Float!
+}
+
+type BoundingBox {
+  north: Float!
+  south: Float!
+  east: Float!
+  west: Float!
+}
+
+input CoordinatesInput {
+  latitude: Float!
+  longitude: Float!
+}
+
+input BoundsInput {
+  north: Float!
+  south: Float!
+  east: Float!
+  west: Float!
+}
+
+enum RouteProfile {
+  DRIVING
+  WALKING
+  CYCLING
+  PUBLIC_TRANSPORT
+}
+
+type RouteResult {
+  routes: [Route!]!
+  waypoints: [Waypoint!]!
+}
+
+type Route {
+  geometry: String!
+  distance: Float!
+  duration: Float!
+  steps: [RouteStep!]!
+}
+
+type Bookmark {
+  id: ID!
+  userId: ID!
+  name: String!
+  coordinates: Coordinates!
+  category: String
+  tags: [String!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+scalar DateTime
+```
+
+### 11.2 SDK 技術仕様
+
+#### 11.2.1 JavaScript SDK 仕様
+```typescript
+// TypeScript Definition for Kiro Map SDK v2.0.0
+
+declare namespace KiroMap {
+  interface SDKOptions {
+    apiKey: string;
+    baseURL?: string;
+    version?: string;
+    timeout?: number;
+    retries?: number;
+    cache?: boolean;
+  }
+
+  interface MapOptions {
+    container: string | HTMLElement;
+    center?: [number, number];
+    zoom?: number;
+    style?: string;
+    interactive?: boolean;
+    attributionControl?: boolean;
+  }
+
+  interface SearchOptions {
+    limit?: number;
+    bounds?: BoundingBox;
+    category?: string;
+    language?: string;
+  }
+
+  interface RouteOptions {
+    profile?: 'driving' | 'walking' | 'cycling';
+    alternatives?: boolean;
+    steps?: boolean;
+    geometries?: 'geojson' | 'polyline';
+  }
+
+  // Main SDK Class
+  class SDK {
+    constructor(options: SDKOptions);
+    
+    // Services
+    readonly map: MapService;
+    readonly search: SearchService;
+    readonly routing: RoutingService;
+    readonly user: UserService;
+    readonly analytics: AnalyticsService;
+    
+    // Lifecycle
+    initialize(): Promise<void>;
+    destroy(): void;
+    
+    // Events
+    on(event: string, callback: Function): void;
+    off(event: string, callback: Function): void;
+    emit(event: string, data?: any): void;
+  }
+
+  // Map Service
+  class MapService {
+    create(options: MapOptions): Promise<Map>;
+    getStyles(): Promise<MapStyle[]>;
+    getTile(z: number, x: number, y: number, style?: string): Promise<string>;
+  }
+
+  // Search Service
+  class SearchService {
+    geocode(query: string, options?: SearchOptions): Promise<SearchResult[]>;
+    reverseGeocode(coordinates: [number, number], options?: SearchOptions): Promise<SearchResult[]>;
+    autocomplete(query: string, limit?: number): Promise<string[]>;
+    searchPOI(query: string, options?: SearchOptions): Promise<SearchResult[]>;
+  }
+
+  // Routing Service
+  class RoutingService {
+    calculateRoute(
+      origin: [number, number],
+      destination: [number, number],
+      options?: RouteOptions
+    ): Promise<RouteResult>;
+    
+    optimizeRoute(waypoints: [number, number][], options?: RouteOptions): Promise<RouteResult>;
+  }
+
+  // User Service
+  class UserService {
+    authenticate(token: string): Promise<User>;
+    getBookmarks(): Promise<Bookmark[]>;
+    createBookmark(bookmark: BookmarkInput): Promise<Bookmark>;
+    updateBookmark(id: string, bookmark: BookmarkInput): Promise<Bookmark>;
+    deleteBookmark(id: string): Promise<boolean>;
+    
+    getSearchHistory(): Promise<SearchHistoryItem[]>;
+    clearSearchHistory(): Promise<boolean>;
+    
+    getPreferences(): Promise<UserPreferences>;
+    updatePreferences(preferences: UserPreferencesInput): Promise<UserPreferences>;
+  }
+
+  // Analytics Service
+  class AnalyticsService {
+    track(event: string, properties?: Record<string, any>): void;
+    getUsageStats(): Promise<UsageStats>;
+  }
+
+  // Map Class
+  class Map {
+    // Map Control
+    setCenter(coordinates: [number, number]): void;
+    getCenter(): [number, number];
+    setZoom(zoom: number): void;
+    getZoom(): number;
+    fitBounds(bounds: BoundingBox, options?: FitBoundsOptions): void;
+    
+    // Style
+    setStyle(style: string): void;
+    getStyle(): string;
+    
+    // Layers
+    addLayer(layer: Layer): void;
+    removeLayer(layerId: string): void;
+    getLayer(layerId: string): Layer | undefined;
+    
+    // Markers
+    addMarker(coordinates: [number, number], options?: MarkerOptions): Marker;
+    removeMarker(markerId: string): void;
+    
+    // Events
+    on(event: MapEvent, callback: Function): void;
+    off(event: MapEvent, callback: Function): void;
+    
+    // Lifecycle
+    resize(): void;
+    destroy(): void;
+  }
+
+  // Data Types
+  interface BoundingBox {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  }
+
+  interface SearchResult {
+    id: string;
+    name: string;
+    address?: string;
+    coordinates: [number, number];
+    category?: string;
+    importance: number;
+    boundingBox?: BoundingBox;
+  }
+
+  interface RouteResult {
+    routes: Route[];
+    waypoints: Waypoint[];
+  }
+
+  interface Route {
+    geometry: string;
+    distance: number;
+    duration: number;
+    steps: RouteStep[];
+  }
+
+  interface Bookmark {
+    id: string;
+    name: string;
+    coordinates: [number, number];
+    category?: string;
+    tags: string[];
+    createdAt: Date;
+    updatedAt: Date;
+  }
+
+  interface User {
+    id: string;
+    email: string;
+    name: string;
+    organization?: Organization;
+    permissions: string[];
+  }
+
+  // Error Types
+  class KiroMapError extends Error {
+    code: string;
+    statusCode?: number;
+    details?: any;
+  }
+
+  class AuthenticationError extends KiroMapError {}
+  class RateLimitError extends KiroMapError {}
+  class ValidationError extends KiroMapError {}
+  class NetworkError extends KiroMapError {}
+}
+
+// Export
+export = KiroMap;
+export as namespace KiroMap;
+```
+
+#### 11.2.2 React Components 仕様
+```typescript
+// React Components Library Types
+import React from 'react';
+
+declare module '@kiro-map/react' {
+  // Provider Component
+  interface KiroMapProviderProps {
+    apiKey: string;
+    baseURL?: string;
+    children: React.ReactNode;
+  }
+  
+  export const KiroMapProvider: React.FC<KiroMapProviderProps>;
+
+  // Map Component
+  interface KiroMapProps {
+    center?: [number, number];
+    zoom?: number;
+    style?: string;
+    className?: string;
+    onMapLoad?: (map: KiroMap.Map) => void;
+    onMapClick?: (event: MapClickEvent) => void;
+    onMapMove?: (event: MapMoveEvent) => void;
+    children?: React.ReactNode;
+  }
+  
+  export const KiroMap: React.FC<KiroMapProps>;
+
+  // Search Component
+  interface KiroSearchProps {
+    placeholder?: string;
+    autoComplete?: boolean;
+    debounceMs?: number;
+    limit?: number;
+    onSelect?: (result: KiroMap.SearchResult) => void;
+    onResults?: (results: KiroMap.SearchResult[]) => void;
+    className?: string;
+  }
+  
+  export const KiroSearch: React.FC<KiroSearchProps>;
+
+  // Route Component
+  interface KiroRouteProps {
+    origin?: [number, number];
+    destination?: [number, number];
+    profile?: 'driving' | 'walking' | 'cycling';
+    alternatives?: boolean;
+    onRouteCalculated?: (result: KiroMap.RouteResult) => void;
+    onRouteError?: (error: Error) => void;
+  }
+  
+  export const KiroRoute: React.FC<KiroRouteProps>;
+
+  // Marker Component
+  interface KiroMarkerProps {
+    coordinates: [number, number];
+    popup?: React.ReactNode;
+    draggable?: boolean;
+    onDrag?: (coordinates: [number, number]) => void;
+    onClick?: () => void;
+    className?: string;
+  }
+  
+  export const KiroMarker: React.FC<KiroMarkerProps>;
+
+  // Hooks
+  export function useKiroMap(): KiroMap.Map | null;
+  export function useKiroSearch(): {
+    search: (query: string) => Promise<KiroMap.SearchResult[]>;
+    loading: boolean;
+    error: Error | null;
+  };
+  export function useKiroRoute(): {
+    calculateRoute: (origin: [number, number], destination: [number, number]) => Promise<KiroMap.RouteResult>;
+    loading: boolean;
+    error: Error | null;
+  };
+
+  // Event Types
+  interface MapClickEvent {
+    coordinates: [number, number];
+    originalEvent: MouseEvent;
+  }
+
+  interface MapMoveEvent {
+    center: [number, number];
+    zoom: number;
+    bounds: KiroMap.BoundingBox;
+  }
+}
+```
+
+### 11.3 認証・認可仕様
+
+#### 11.3.1 JWT Token 仕様
+```json
+{
+  "header": {
+    "alg": "HS256",
+    "typ": "JWT"
+  },
+  "payload": {
+    "sub": "user-uuid",
+    "iss": "https://auth.kiro-map.com",
+    "aud": "https://api.kiro-map.com",
+    "exp": 1640995200,
+    "iat": 1640908800,
+    "jti": "token-uuid",
+    "scope": "read:maps write:bookmarks",
+    "org": "organization-uuid",
+    "role": "developer",
+    "permissions": [
+      "maps:read",
+      "search:read", 
+      "routing:read",
+      "bookmarks:read",
+      "bookmarks:write"
+    ],
+    "rate_limit": {
+      "requests_per_minute": 1000,
+      "requests_per_day": 100000
+    }
+  }
+}
+```
+
+#### 11.3.2 API Key 仕様
+```typescript
+interface APIKey {
+  id: string;
+  organizationId: string;
+  name: string;
+  keyPrefix: string; // "km_live_" or "km_test_"
+  permissions: Permission[];
+  rateLimit: RateLimit;
+  isActive: boolean;
+  createdAt: Date;
+  expiresAt?: Date;
+  lastUsedAt?: Date;
+  allowedOrigins?: string[];
+  allowedIPs?: string[];
+}
+
+interface Permission {
+  resource: string; // "maps", "search", "routing", etc.
+  actions: string[]; // ["read", "write", "delete"]
+  conditions?: Record<string, any>;
+}
+
+interface RateLimit {
+  requestsPerMinute: number;
+  requestsPerHour: number;
+  requestsPerDay: number;
+  burstLimit: number;
+}
+```
+
+### 11.4 データベース仕様
+
+#### 11.4.1 PostgreSQL スキーマ
+```sql
+-- Organizations
+CREATE TABLE organizations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  slug VARCHAR(100) UNIQUE NOT NULL,
+  plan_type VARCHAR(50) NOT NULL DEFAULT 'free',
+  billing_email VARCHAR(255),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  deleted_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Users
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  organization_id UUID REFERENCES organizations(id),
+  role VARCHAR(50) NOT NULL DEFAULT 'member',
+  is_active BOOLEAN DEFAULT true,
+  email_verified_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- API Keys
+CREATE TABLE api_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID REFERENCES organizations(id),
+  name VARCHAR(255) NOT NULL,
+  key_prefix VARCHAR(20) NOT NULL,
+  key_hash VARCHAR(255) NOT NULL,
+  permissions JSONB NOT NULL DEFAULT '[]',
+  rate_limit JSONB NOT NULL DEFAULT '{"requestsPerMinute": 60, "requestsPerHour": 1000, "requestsPerDay": 10000}',
+  allowed_origins TEXT[],
+  allowed_ips INET[],
+  is_active BOOLEAN DEFAULT true,
+  last_used_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE
+);
+
+-- API Usage Logs
+CREATE TABLE api_usage_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  api_key_id UUID REFERENCES api_keys(id),
+  endpoint VARCHAR(255) NOT NULL,
+  method VARCHAR(10) NOT NULL,
+  status_code INTEGER NOT NULL,
+  response_time_ms INTEGER NOT NULL,
+  request_size_bytes INTEGER,
+  response_size_bytes INTEGER,
+  user_agent TEXT,
+  ip_address INET,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- User Bookmarks
+CREATE TABLE user_bookmarks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id),
+  name VARCHAR(255) NOT NULL,
+  latitude DECIMAL(10, 8) NOT NULL,
+  longitude DECIMAL(11, 8) NOT NULL,
+  category VARCHAR(100),
+  tags TEXT[] DEFAULT '{}',
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Search History
+CREATE TABLE search_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id),
+  query TEXT NOT NULL,
+  results_count INTEGER NOT NULL,
+  response_time_ms INTEGER NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes
+CREATE INDEX idx_api_keys_organization_id ON api_keys(organization_id);
+CREATE INDEX idx_api_keys_key_hash ON api_keys(key_hash);
+CREATE INDEX idx_api_usage_logs_api_key_id ON api_usage_logs(api_key_id);
+CREATE INDEX idx_api_usage_logs_created_at ON api_usage_logs(created_at);
+CREATE INDEX idx_user_bookmarks_user_id ON user_bookmarks(user_id);
+CREATE INDEX idx_search_history_user_id ON search_history(user_id);
+CREATE INDEX idx_search_history_created_at ON search_history(created_at);
+```
+
+### 11.5 パフォーマンス仕様
+
+#### 11.5.1 API パフォーマンス目標
+```yaml
+performance_targets:
+  api_response_times:
+    p50: 100ms    # 50%のリクエストが100ms以内
+    p95: 200ms    # 95%のリクエストが200ms以内
+    p99: 500ms    # 99%のリクエストが500ms以内
+  
+  throughput:
+    requests_per_second: 10000
+    concurrent_connections: 100000
+  
+  availability:
+    uptime: 99.9%
+    max_downtime_per_month: 43.2min
+  
+  cache_performance:
+    hit_ratio: 90%
+    cache_response_time: 10ms
+  
+  database_performance:
+    query_response_time_p95: 50ms
+    connection_pool_utilization: 80%
+```
+
+#### 11.5.2 SDK パフォーマンス目標
+```yaml
+sdk_performance:
+  bundle_size:
+    core_sdk: 50KB      # gzip圧縮後
+    react_components: 30KB
+    vue_components: 30KB
+  
+  initialization:
+    sdk_init_time: 100ms
+    first_map_render: 500ms
+  
+  memory_usage:
+    initial_memory: 5MB
+    max_memory: 20MB
+    memory_growth_rate: <1MB/hour
+  
+  network_efficiency:
+    api_call_batching: true
+    request_deduplication: true
+    automatic_retry: true
+    offline_queue: true
+```
+
+---
+
+**Phase B技術仕様書バージョン**: 1.0  
+**作成日**: 2025年8月16日  
+**対象システム**: Kiro OSS Map v2.0.0  
+**仕様完成度**: 基本仕様完了  
+**実装準備**: API設計完了

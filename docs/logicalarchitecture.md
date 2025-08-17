@@ -2,9 +2,10 @@
 
 **バージョン**: 1.3.0  
 **作成日**: 2025年8月13日  
-**最終更新**: 2025年8月16日 14:30:00  
+**最終更新**: 2025年8月17日 15:00:00  
 **実装状況**: 100%完了 ✅  
-**Phase A完了**: PWA強化・パフォーマンス最適化 ✅
+**Phase A完了**: PWA強化・パフォーマンス最適化・品質チェック完了 ✅  
+**テスト結果**: 14/14テスト成功（成功率100%） ✅
 
 ## 1. 実装済みシステム全体アーキテクチャ
 
@@ -167,7 +168,36 @@ sequenceDiagram
     UI-->>User: 地図上にピン表示
 ```
 
-## 4. コンポーネント関係図（実装完了）
+## 4. v1.3.0 新機能アーキテクチャ（実装完了）
+
+```mermaid
+graph TB
+    subgraph "v1.3.0 New Services - 実装完了"
+        OFFLINE[OfflineSearchService<br/>オフライン検索]
+        IMAGE_OPT[ImageOptimizationService<br/>画像最適化]
+        COMPAT[BrowserCompatibilityService<br/>ブラウザ互換性]
+    end
+    
+    subgraph "Enhanced PWA Layer - 実装完了"
+        SW_V13[Service Worker v1.3.0<br/>高度キャッシュ戦略]
+        CACHE_MGR[Cache Manager<br/>多層キャッシュ]
+        OFFLINE_MGR[Offline Manager<br/>オフライン制御]
+    end
+    
+    subgraph "Storage Enhancement - 実装完了"
+        INDEXEDDB[IndexedDB<br/>オフラインデータ]
+        CACHE_API[Cache API<br/>リソースキャッシュ]
+        ENCRYPTED_STORAGE[Encrypted Storage<br/>暗号化ストレージ]
+    end
+    
+    OFFLINE --> INDEXEDDB
+    IMAGE_OPT --> CACHE_API
+    COMPAT --> SW_V13
+    SW_V13 --> CACHE_MGR
+    CACHE_MGR --> OFFLINE_MGR
+```
+
+## 5. コンポーネント関係図（実装完了）
 
 ```mermaid
 graph LR
@@ -175,6 +205,8 @@ graph LR
         SEARCHBOX[SearchBox<br/>検索UI]
         ROUTEPANEL[RoutePanel<br/>ルート管理]
         SHAREDIALOG[ShareDialog<br/>共有ダイアログ]
+        BOOKMARKPANEL[BookmarkPanel<br/>ブックマーク管理]
+        MEASUREPANEL[MeasurementPanel<br/>計測ツール]
     end
     
     subgraph "Core Services - 実装完了"
@@ -183,6 +215,12 @@ graph LR
         ROUTESERVICE[RouteService<br/>ルート計算]
         SHARESERVICE[ShareService<br/>共有処理]
         IMAGESERVICE[ImageService<br/>画像取得]
+    end
+    
+    subgraph "v1.3.0 New Services - 実装完了"
+        OFFLINE_SEARCH[OfflineSearchService<br/>オフライン検索]
+        IMAGE_OPT[ImageOptimizationService<br/>画像最適化]
+        BROWSER_COMPAT[BrowserCompatibilityService<br/>ブラウザ互換性]
     end
     
     subgraph "Utility Services - 実装完了"
@@ -2568,4 +2606,439 @@ graph TB
 **最終更新**: 2025年8月16日 14:30:00  
 **対象システム**: Kiro OSS Map v1.3.0  
 **アーキテクチャ成熟度**: Production Ready Plus  
-**技術的負債**: 最小限（2件の軽微な改善点のみ）
+**技術的負債**: 最小限（2件の軽微な改善点のみ）---
+
+##
+ 🚀 v2.0.0 Phase B アーキテクチャ：API・プラットフォーム拡張
+
+### 9.1 API Gateway アーキテクチャ
+
+```mermaid
+graph TB
+    subgraph "Client Applications"
+        WEB_APP[Web Application v1.3.0]
+        MOBILE[Mobile Apps]
+        THIRD_PARTY[Third-party Apps]
+        WIDGETS[Embedded Widgets]
+    end
+    
+    subgraph "API Gateway v2.0.0"
+        LB[Load Balancer]
+        AUTH[Authentication Layer]
+        RATE[Rate Limiting]
+        ROUTER[API Router]
+        MIDDLEWARE[Middleware Stack]
+    end
+    
+    subgraph "Microservices"
+        AUTH_SVC[Auth Service]
+        MAP_SVC[Map Service]
+        SEARCH_SVC[Search Service]
+        ROUTE_SVC[Route Service]
+        USER_SVC[User Data Service]
+        ANALYTICS_SVC[Analytics Service]
+    end
+    
+    WEB_APP --> LB
+    MOBILE --> LB
+    THIRD_PARTY --> LB
+    WIDGETS --> LB
+    
+    LB --> AUTH
+    AUTH --> RATE
+    RATE --> ROUTER
+    ROUTER --> MIDDLEWARE
+    
+    MIDDLEWARE --> AUTH_SVC
+    MIDDLEWARE --> MAP_SVC
+    MIDDLEWARE --> SEARCH_SVC
+    MIDDLEWARE --> ROUTE_SVC
+    MIDDLEWARE --> USER_SVC
+    MIDDLEWARE --> ANALYTICS_SVC
+```
+
+### 9.2 マイクロサービス詳細アーキテクチャ
+
+```mermaid
+graph TB
+    subgraph "Auth Service"
+        AUTH_API[Auth API]
+        JWT_MGR[JWT Manager]
+        OAUTH[OAuth Provider]
+        PERM[Permission Engine]
+    end
+    
+    subgraph "Map Service"
+        MAP_API[Map API]
+        TILE_GEN[Tile Generator]
+        STYLE_MGR[Style Manager]
+        CACHE_MGR[Cache Manager]
+    end
+    
+    subgraph "Search Service"
+        SEARCH_API[Search API]
+        GEO_ENGINE[Geocoding Engine]
+        POI_ENGINE[POI Search Engine]
+        AUTO_COMPLETE[Autocomplete Engine]
+    end
+    
+    subgraph "Route Service"
+        ROUTE_API[Route API]
+        CALC_ENGINE[Calculation Engine]
+        OPT_ENGINE[Optimization Engine]
+        REALTIME[Real-time Updates]
+    end
+    
+    subgraph "User Data Service"
+        USER_API[User Data API]
+        BOOKMARK_MGR[Bookmark Manager]
+        HISTORY_MGR[History Manager]
+        SHARE_MGR[Share Manager]
+    end
+    
+    subgraph "Analytics Service"
+        ANALYTICS_API[Analytics API]
+        USAGE_TRACKER[Usage Tracker]
+        PERF_MONITOR[Performance Monitor]
+        REPORT_GEN[Report Generator]
+    end
+    
+    subgraph "Data Layer"
+        POSTGRES[(PostgreSQL)]
+        REDIS[(Redis Cache)]
+        ELASTICSEARCH[(Elasticsearch)]
+        INFLUXDB[(InfluxDB)]
+    end
+    
+    AUTH_API --> POSTGRES
+    JWT_MGR --> REDIS
+    
+    MAP_API --> POSTGRES
+    TILE_GEN --> REDIS
+    
+    SEARCH_API --> ELASTICSEARCH
+    GEO_ENGINE --> POSTGRES
+    
+    ROUTE_API --> POSTGRES
+    CALC_ENGINE --> REDIS
+    
+    USER_API --> POSTGRES
+    BOOKMARK_MGR --> REDIS
+    
+    ANALYTICS_API --> INFLUXDB
+    USAGE_TRACKER --> REDIS
+```
+
+### 9.3 SDK・ウィジェット アーキテクチャ
+
+```mermaid
+graph TB
+    subgraph "SDK Ecosystem"
+        JS_SDK[JavaScript SDK]
+        TS_DEF[TypeScript Definitions]
+        REACT_LIB[React Components]
+        VUE_LIB[Vue Components]
+        MOBILE_SDK[Mobile SDKs]
+    end
+    
+    subgraph "Widget System"
+        WIDGET_CORE[Widget Core]
+        MAP_WIDGET[Map Widget]
+        SEARCH_WIDGET[Search Widget]
+        ROUTE_WIDGET[Route Widget]
+        CUSTOM_WIDGET[Custom Widgets]
+    end
+    
+    subgraph "Developer Tools"
+        API_EXPLORER[API Explorer]
+        CODE_GEN[Code Generator]
+        TEST_ENV[Test Environment]
+        DEBUG_TOOLS[Debug Tools]
+    end
+    
+    subgraph "API Gateway"
+        REST_API[REST API]
+        GRAPHQL[GraphQL API]
+        WEBSOCKET[WebSocket API]
+        WEBHOOK[Webhook API]
+    end
+    
+    JS_SDK --> REST_API
+    REACT_LIB --> GRAPHQL
+    VUE_LIB --> GRAPHQL
+    MOBILE_SDK --> REST_API
+    
+    WIDGET_CORE --> REST_API
+    MAP_WIDGET --> WEBSOCKET
+    SEARCH_WIDGET --> REST_API
+    ROUTE_WIDGET --> WEBSOCKET
+    
+    API_EXPLORER --> REST_API
+    API_EXPLORER --> GRAPHQL
+    CODE_GEN --> REST_API
+    TEST_ENV --> REST_API
+```
+
+### 9.4 開発者ポータル アーキテクチャ
+
+```mermaid
+graph TB
+    subgraph "Developer Portal Frontend"
+        PORTAL_APP[Portal Web App]
+        DASHBOARD[Dashboard]
+        DOCS[Documentation]
+        COMMUNITY[Community]
+    end
+    
+    subgraph "Portal Backend"
+        PORTAL_API[Portal API]
+        USER_MGR[User Manager]
+        PROJECT_MGR[Project Manager]
+        BILLING[Billing System]
+    end
+    
+    subgraph "Documentation System"
+        DOC_GEN[Doc Generator]
+        API_SPEC[API Specifications]
+        TUTORIALS[Tutorials]
+        EXAMPLES[Code Examples]
+    end
+    
+    subgraph "Analytics & Monitoring"
+        USAGE_ANALYTICS[Usage Analytics]
+        PERF_MONITOR[Performance Monitor]
+        ERROR_TRACKING[Error Tracking]
+        ALERTS[Alert System]
+    end
+    
+    PORTAL_APP --> PORTAL_API
+    DASHBOARD --> USER_MGR
+    DASHBOARD --> PROJECT_MGR
+    DASHBOARD --> BILLING
+    
+    DOCS --> DOC_GEN
+    DOC_GEN --> API_SPEC
+    
+    PORTAL_API --> USAGE_ANALYTICS
+    PORTAL_API --> PERF_MONITOR
+    PERF_MONITOR --> ALERTS
+```
+
+### 9.5 データフロー アーキテクチャ
+
+```mermaid
+sequenceDiagram
+    participant Client as Client App
+    participant Gateway as API Gateway
+    participant Auth as Auth Service
+    participant Service as Microservice
+    participant DB as Database
+    participant Cache as Redis Cache
+    participant Analytics as Analytics
+    
+    Note over Client,Analytics: v2.0.0 API Request Flow
+    
+    Client->>Gateway: API Request + API Key
+    Gateway->>Auth: Validate API Key
+    Auth->>Gateway: User Info + Permissions
+    Gateway->>Gateway: Check Rate Limit
+    Gateway->>Service: Forward Request
+    
+    Service->>Cache: Check Cache
+    alt Cache Hit
+        Cache->>Service: Return Cached Data
+    else Cache Miss
+        Service->>DB: Query Database
+        DB->>Service: Return Data
+        Service->>Cache: Update Cache
+    end
+    
+    Service->>Gateway: API Response
+    Gateway->>Analytics: Log Usage
+    Gateway->>Client: Return Response
+    
+    Analytics->>Analytics: Process Metrics
+    Analytics->>Analytics: Generate Reports
+```
+
+### 9.6 スケーリング アーキテクチャ
+
+```mermaid
+graph TB
+    subgraph "Load Balancing Layer"
+        ELB[Elastic Load Balancer]
+        CDN[CloudFlare CDN]
+        WAF[Web Application Firewall]
+    end
+    
+    subgraph "API Gateway Cluster"
+        GW1[Gateway Instance 1]
+        GW2[Gateway Instance 2]
+        GW3[Gateway Instance 3]
+        GWN[Gateway Instance N]
+    end
+    
+    subgraph "Microservices Cluster"
+        AUTH_CLUSTER[Auth Service Cluster]
+        MAP_CLUSTER[Map Service Cluster]
+        SEARCH_CLUSTER[Search Service Cluster]
+        ROUTE_CLUSTER[Route Service Cluster]
+    end
+    
+    subgraph "Data Layer Cluster"
+        PG_PRIMARY[(PostgreSQL Primary)]
+        PG_REPLICA1[(PostgreSQL Replica 1)]
+        PG_REPLICA2[(PostgreSQL Replica 2)]
+        REDIS_CLUSTER[(Redis Cluster)]
+        ES_CLUSTER[(Elasticsearch Cluster)]
+    end
+    
+    subgraph "Monitoring & Logging"
+        PROMETHEUS[Prometheus]
+        GRAFANA[Grafana]
+        ELK[ELK Stack]
+        JAEGER[Jaeger Tracing]
+    end
+    
+    CDN --> ELB
+    ELB --> WAF
+    WAF --> GW1
+    WAF --> GW2
+    WAF --> GW3
+    WAF --> GWN
+    
+    GW1 --> AUTH_CLUSTER
+    GW2 --> MAP_CLUSTER
+    GW3 --> SEARCH_CLUSTER
+    GWN --> ROUTE_CLUSTER
+    
+    AUTH_CLUSTER --> PG_PRIMARY
+    MAP_CLUSTER --> PG_REPLICA1
+    SEARCH_CLUSTER --> ES_CLUSTER
+    ROUTE_CLUSTER --> REDIS_CLUSTER
+    
+    AUTH_CLUSTER --> PROMETHEUS
+    MAP_CLUSTER --> PROMETHEUS
+    PROMETHEUS --> GRAFANA
+    
+    GW1 --> ELK
+    GW2 --> ELK
+    AUTH_CLUSTER --> JAEGER
+```
+
+### 9.7 セキュリティ アーキテクチャ
+
+```mermaid
+graph TB
+    subgraph "Security Layers"
+        WAF[Web Application Firewall]
+        DDoS[DDoS Protection]
+        SSL[SSL/TLS Termination]
+        RATE_LIMIT[Rate Limiting]
+    end
+    
+    subgraph "Authentication & Authorization"
+        API_KEY[API Key Validation]
+        JWT[JWT Token Validation]
+        OAUTH[OAuth 2.0 / OIDC]
+        RBAC[Role-Based Access Control]
+    end
+    
+    subgraph "Data Security"
+        ENCRYPTION[Data Encryption at Rest]
+        TLS[TLS in Transit]
+        VAULT[Secret Management]
+        AUDIT[Audit Logging]
+    end
+    
+    subgraph "Network Security"
+        VPC[Virtual Private Cloud]
+        FIREWALL[Network Firewall]
+        BASTION[Bastion Host]
+        VPN[VPN Gateway]
+    end
+    
+    subgraph "Monitoring & Compliance"
+        SIEM[Security Information Event Management]
+        COMPLIANCE[Compliance Monitoring]
+        VULNERABILITY[Vulnerability Scanning]
+        INCIDENT[Incident Response]
+    end
+    
+    WAF --> API_KEY
+    DDoS --> JWT
+    SSL --> OAUTH
+    RATE_LIMIT --> RBAC
+    
+    API_KEY --> ENCRYPTION
+    JWT --> TLS
+    OAUTH --> VAULT
+    RBAC --> AUDIT
+    
+    ENCRYPTION --> VPC
+    TLS --> FIREWALL
+    VAULT --> BASTION
+    AUDIT --> VPN
+    
+    VPC --> SIEM
+    FIREWALL --> COMPLIANCE
+    BASTION --> VULNERABILITY
+    VPN --> INCIDENT
+```
+
+---
+
+## 📊 v2.0.0 システム容量設計
+
+### 9.8 容量計画
+
+#### 9.8.1 トラフィック予測
+```
+Traffic Projections (Year 1)
+├── API Requests
+│   ├── Month 1: 100K requests/month
+│   ├── Month 6: 1M requests/month
+│   ├── Month 12: 10M requests/month
+│   └── Peak: 1000 requests/second
+├── Concurrent Users
+│   ├── Average: 1,000 users
+│   ├── Peak: 10,000 users
+│   └── Burst: 50,000 users
+└── Data Storage
+    ├── User Data: 100GB
+    ├── Analytics: 500GB
+    ├── Cache: 50GB
+    └── Logs: 200GB
+```
+
+#### 9.8.2 リソース要件
+```
+Infrastructure Requirements
+├── API Gateway
+│   ├── CPU: 4 cores × 3 instances
+│   ├── Memory: 8GB × 3 instances
+│   ├── Network: 1Gbps
+│   └── Storage: 100GB SSD
+├── Microservices
+│   ├── CPU: 2 cores × 6 services × 2 instances
+│   ├── Memory: 4GB × 6 services × 2 instances
+│   ├── Network: 1Gbps
+│   └── Storage: 50GB SSD per service
+├── Databases
+│   ├── PostgreSQL: 8 cores, 32GB RAM, 1TB SSD
+│   ├── Redis: 4 cores, 16GB RAM, 200GB SSD
+│   ├── Elasticsearch: 4 cores, 16GB RAM, 500GB SSD
+│   └── InfluxDB: 2 cores, 8GB RAM, 200GB SSD
+└── Monitoring
+    ├── Prometheus: 2 cores, 8GB RAM, 200GB SSD
+    ├── Grafana: 1 core, 4GB RAM, 50GB SSD
+    └── ELK: 4 cores, 16GB RAM, 500GB SSD
+```
+
+---
+
+**Phase B論理アーキテクチャバージョン**: 1.0  
+**作成日**: 2025年8月16日  
+**対象システム**: Kiro OSS Map v2.0.0  
+**アーキテクチャ成熟度**: 基本設計完了  
+**スケーラビリティ**: 10M requests/month対応

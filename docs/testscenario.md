@@ -1906,7 +1906,112 @@ Kiro OSS Map v1.3.0（Phase A: 新機能拡張・パフォーマンス向上版�
    - 地図表示が継続されることを確認
    - キャッシュされた検索が利用可能であることを確認
 
-2. **オフライン→オンライン切り替えテスト**
+2. **オフライン→オンライン復帰テスト**
+   - オフライン状態で操作を実行
+   - ネットワークを復帰
+   - 同期処理が正常に動作することを確認
+   - 最新データが取得されることを確認
+
+3. **データ同期テスト**
+   - オフライン時に作成したデータの同期確認
+   - 競合解決機能の動作確認
+   - データ整合性の維持確認
+
+#### 期待結果
+- オンライン・オフライン切り替えが滑らか
+- データ同期が正常に動作する
+- ユーザー体験が途切れない
+
+---
+
+## 🆕 v1.3.0 Phase A 新機能テストシナリオ（2025年8月17日追加）
+
+### TS-055: API Gateway v2.0.0 統合テスト
+
+#### 前提条件
+- API Gateway v2.0.0 が起動している
+- フロントエンドアプリケーションが正常に動作している
+
+#### テスト手順
+1. **API Gateway接続テスト**
+   - フロントエンドからAPI Gatewayへの接続確認
+   - 認証機能の動作確認
+   - レート制限の動作確認
+
+2. **検索API統合テスト**
+   - フロントエンド検索機能とAPI Gatewayの連携確認
+   - 検索結果の正確性確認
+   - エラーハンドリングの動作確認
+
+3. **ルーティングAPI統合テスト**
+   - ルート検索機能とAPI Gatewayの連携確認
+   - 複数交通手段での動作確認
+   - パフォーマンスの確認
+
+#### 期待結果
+- API Gatewayとの統合が正常に動作する
+- 全ての機能が期待通りに動作する
+- エラーハンドリングが適切に動作する
+
+---
+
+### TS-056: 最新機能統合品質テスト
+
+#### 前提条件
+- 全ての新機能が実装されている
+- アプリケーションが正常に起動している
+
+#### テスト手順
+1. **全機能連携テスト**
+   - PWA機能 + オフライン検索 + 画像最適化の連携確認
+   - ブラウザ互換性 + パフォーマンス最適化の連携確認
+   - API Gateway + フロントエンド機能の連携確認
+
+2. **エンドツーエンドシナリオ**
+   - アプリ起動 → 検索 → ルート作成 → ブックマーク → 共有 → オフライン利用
+   - 全工程での品質確認
+   - パフォーマンス測定
+
+3. **品質メトリクス確認**
+   - 読み込み速度: 3秒以内
+   - 検索応答: 2秒以内
+   - オフライン切り替え: 1秒以内
+   - メモリ使用量: 安定
+
+#### 期待結果
+- 全機能が協調して動作する
+- 品質メトリクスを満たす
+- ユーザー体験が向上している
+
+---
+
+## 📊 テスト実行計画 v1.3.0
+
+### Phase 1: 基本機能テスト（30分）
+- TS-001〜TS-020: 既存機能回帰テスト
+- TS-034〜TS-048: v1.2.1機能テスト
+
+### Phase 2: 新機能テスト（45分）
+- TS-049〜TS-054: v1.3.0新機能テスト
+- TS-055〜TS-056: 統合テスト
+
+### Phase 3: 品質保証テスト（15分）
+- パフォーマンス測定
+- セキュリティ確認
+- アクセシビリティ確認
+
+### 成功基準
+- **Critical機能**: 100%成功必須
+- **High機能**: 95%以上成功
+- **Medium機能**: 90%以上成功
+- **パフォーマンス**: 全指標達成
+
+---
+
+**テストシナリオ更新完了**: 2025年8月17日  
+**総テストケース数**: 56  
+**新規追加**: 2テストケース  
+**実行予定時間**: 90分 **オフライン→オンライン切り替えテスト**
    - オフライン状態で操作
    - ネットワークをオンラインに復帰
    - 新しい検索が正常に動作することを確認
@@ -1978,3 +2083,665 @@ Kiro OSS Map v1.3.0（Phase A: 新機能拡張・パフォーマンス向上版�
 **対象バージョン**: Kiro OSS Map v1.3.0  
 **最終更新**: 2025年8月16日  
 **テスト項目数**: 54項目（新規6項目追加）
+---
+
+#
+# 🚀 API Gateway v2.0.0 テストシナリオ（2025年8月17日追加）
+
+### 📋 API Gateway テスト概要
+
+#### テスト目標
+- RESTful API の正常動作確認
+- 認証・認可システムの検証
+- セキュリティ機能の確認
+- パフォーマンス要件の達成確認
+- エラーハンドリングの検証
+
+#### テスト環境
+- **API Base URL**: http://localhost:3000
+- **Database**: PostgreSQL 15+
+- **Cache**: Redis 7+
+- **Container**: Docker Compose環境
+
+---
+
+### TS-055: API Gateway 基盤機能テスト
+
+#### 前提条件
+- Docker Compose環境が起動している
+- PostgreSQL・Redisが正常に動作している
+
+#### テスト手順
+1. **ヘルスチェックテスト**
+   ```bash
+   curl http://localhost:3000/health
+   ```
+   - ステータス200が返されることを確認
+   - レスポンスに `"status": "healthy"` が含まれることを確認
+
+2. **詳細ヘルスチェックテスト**
+   ```bash
+   curl http://localhost:3000/health/detailed
+   ```
+   - データベース接続状態が正常であることを確認
+   - Redis接続状態が正常であることを確認
+
+3. **API情報取得テスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key" http://localhost:3000/api/v2
+   ```
+   - API名・バージョン情報が正しく返されることを確認
+   - エンドポイント一覧が表示されることを確認
+
+#### 期待結果
+- ✅ ヘルスチェックが正常に動作する
+- ✅ データベース・Redis接続が確認できる
+- ✅ API情報が正しく表示される
+
+---
+
+### TS-056: 認証システムテスト
+
+#### 前提条件
+- API Gatewayが正常に起動している
+
+#### テスト手順
+1. **ユーザー登録テスト**
+   ```bash
+   curl -X POST http://localhost:3000/api/v2/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{
+       "email": "test@example.com",
+       "password": "password123",
+       "name": "Test User",
+       "organizationName": "Test Organization"
+     }'
+   ```
+   - ステータス201が返されることを確認
+   - アクセストークン・リフレッシュトークンが返されることを確認
+
+2. **ログインテスト**
+   ```bash
+   curl -X POST http://localhost:3000/api/v2/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{
+       "email": "test@example.com",
+       "password": "password123"
+     }'
+   ```
+   - ステータス200が返されることを確認
+   - 有効なJWTトークンが返されることを確認
+
+3. **認証が必要なエンドポイントテスト**
+   ```bash
+   curl -H "Authorization: Bearer <access_token>" \
+     http://localhost:3000/api/v2/auth/me
+   ```
+   - ユーザー情報が正しく返されることを確認
+
+4. **無効な認証情報テスト**
+   ```bash
+   curl -X POST http://localhost:3000/api/v2/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{
+       "email": "test@example.com",
+       "password": "wrongpassword"
+     }'
+   ```
+   - ステータス401が返されることを確認
+   - 適切なエラーメッセージが表示されることを確認
+
+#### 期待結果
+- ✅ ユーザー登録・ログインが正常に動作する
+- ✅ JWT認証が正しく機能する
+- ✅ 無効な認証情報が適切に拒否される
+
+---
+
+### TS-057: APIキー認証テスト
+
+#### 前提条件
+- API Gatewayが正常に起動している
+- テスト用APIキーが設定されている
+
+#### テスト手順
+1. **有効なAPIキーテスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key-12345" \
+     http://localhost:3000/api/v2/maps/styles
+   ```
+   - ステータス200が返されることを確認
+   - 地図スタイル一覧が返されることを確認
+
+2. **無効なAPIキーテスト**
+   ```bash
+   curl -H "X-API-Key: invalid-key" \
+     http://localhost:3000/api/v2/maps/styles
+   ```
+   - ステータス401が返されることを確認
+   - 適切なエラーメッセージが表示されることを確認
+
+3. **APIキーなしテスト**
+   ```bash
+   curl http://localhost:3000/api/v2/maps/styles
+   ```
+   - ステータス401が返されることを確認
+   - APIキーが必要である旨のメッセージが表示されることを確認
+
+#### 期待結果
+- ✅ 有効なAPIキーで正常にアクセスできる
+- ✅ 無効なAPIキーが適切に拒否される
+- ✅ APIキーなしのアクセスが拒否される
+
+---
+
+### TS-058: 地図API機能テスト
+
+#### 前提条件
+- 有効なAPIキーが利用可能
+
+#### テスト手順
+1. **地図スタイル取得テスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key-12345" \
+     http://localhost:3000/api/v2/maps/styles
+   ```
+   - 複数の地図スタイルが返されることを確認
+   - 各スタイルに必要な情報（id, name, description）が含まれることを確認
+
+2. **特定スタイル取得テスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key-12345" \
+     http://localhost:3000/api/v2/maps/styles/standard
+   ```
+   - 指定したスタイルの詳細情報が返されることを確認
+   - MapLibre GL JS形式の定義が含まれることを確認
+
+3. **地図タイル取得テスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key-12345" \
+     http://localhost:3000/api/v2/maps/tiles/10/500/300
+   ```
+   - 画像データ（PNG）が返されることを確認
+   - 適切なContent-Typeヘッダーが設定されることを確認
+
+4. **無効なタイル座標テスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key-12345" \
+     http://localhost:3000/api/v2/maps/tiles/25/0/0
+   ```
+   - ステータス400が返されることを確認
+   - 適切なエラーメッセージが表示されることを確認
+
+#### 期待結果
+- ✅ 地図スタイル情報が正しく取得できる
+- ✅ 地図タイルが正常に配信される
+- ✅ 無効なリクエストが適切に処理される
+
+---
+
+### TS-059: 検索API機能テスト
+
+#### 前提条件
+- 有効なAPIキーが利用可能
+
+#### テスト手順
+1. **ジオコーディングテスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key-12345" \
+     "http://localhost:3000/api/v2/search/geocode?q=東京駅"
+   ```
+   - 検索結果が返されることを確認
+   - 座標情報が含まれることを確認
+   - 住所情報が含まれることを確認
+
+2. **逆ジオコーディングテスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key-12345" \
+     "http://localhost:3000/api/v2/search/reverse?lat=35.6812&lng=139.7671"
+   ```
+   - 指定座標の住所情報が返されることを確認
+   - 地名・行政区域情報が含まれることを確認
+
+3. **オートコンプリートテスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key-12345" \
+     "http://localhost:3000/api/v2/search/autocomplete?q=東京"
+   ```
+   - 検索候補が返されることを確認
+   - 候補数が適切に制限されることを確認
+
+4. **POI検索テスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key-12345" \
+     "http://localhost:3000/api/v2/search/poi?category=restaurant&lat=35.6812&lng=139.7671"
+   ```
+   - 指定カテゴリのPOIが返されることを確認
+   - 距離情報が含まれることを確認
+
+5. **検索カテゴリ取得テスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key-12345" \
+     http://localhost:3000/api/v2/search/categories
+   ```
+   - 利用可能なカテゴリ一覧が返されることを確認
+
+#### 期待結果
+- ✅ 各種検索機能が正常に動作する
+- ✅ 検索結果が適切な形式で返される
+- ✅ エラーハンドリングが適切に動作する
+
+---
+
+### TS-060: ルーティングAPI機能テスト
+
+#### 前提条件
+- 有効なAPIキーが利用可能
+
+#### テスト手順
+1. **基本ルート計算テスト**
+   ```bash
+   curl -X POST http://localhost:3000/api/v2/routing/calculate \
+     -H "X-API-Key: test-api-key-12345" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "origin": [139.7671, 35.6812],
+       "destination": [139.6917, 35.6895],
+       "profile": "driving"
+     }'
+   ```
+   - ルート情報が返されることを確認
+   - 距離・所要時間が含まれることを確認
+   - ジオメトリ情報が含まれることを確認
+
+2. **複数交通手段テスト**
+   ```bash
+   curl -X POST http://localhost:3000/api/v2/routing/calculate \
+     -H "X-API-Key: test-api-key-12345" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "origin": [139.7671, 35.6812],
+       "destination": [139.6917, 35.6895],
+       "profile": "walking"
+     }'
+   ```
+   - 徒歩ルートが正しく計算されることを確認
+   - 車ルートと異なる結果が返されることを確認
+
+3. **ルートプロファイル取得テスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key-12345" \
+     http://localhost:3000/api/v2/routing/profiles
+   ```
+   - 利用可能なプロファイル一覧が返されることを確認
+   - 各プロファイルの詳細情報が含まれることを確認
+
+4. **等時線計算テスト**
+   ```bash
+   curl -X POST http://localhost:3000/api/v2/routing/isochrone \
+     -H "X-API-Key: test-api-key-12345" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "center": [139.7671, 35.6812],
+       "contours": [{"time": 600}],
+       "profile": "driving"
+     }'
+   ```
+   - 等時線ポリゴンが返されることを確認
+   - GeoJSON形式で返されることを確認
+
+5. **無効な座標テスト**
+   ```bash
+   curl -X POST http://localhost:3000/api/v2/routing/calculate \
+     -H "X-API-Key: test-api-key-12345" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "origin": [200, 100],
+       "destination": [139.6917, 35.6895],
+       "profile": "driving"
+     }'
+   ```
+   - ステータス400が返されることを確認
+   - 適切なエラーメッセージが表示されることを確認
+
+#### 期待結果
+- ✅ ルート計算が正常に動作する
+- ✅ 複数の交通手段に対応している
+- ✅ 等時線計算が正常に動作する
+- ✅ 入力検証が適切に動作する
+
+---
+
+### TS-061: ユーザーデータAPI機能テスト
+
+#### 前提条件
+- 有効なJWTトークンが利用可能
+- ユーザーがログイン済み
+
+#### テスト手順
+1. **ブックマーク取得テスト**
+   ```bash
+   curl -H "Authorization: Bearer <access_token>" \
+     http://localhost:3000/api/v2/user/bookmarks
+   ```
+   - ブックマーク一覧が返されることを確認
+   - 各ブックマークに必要な情報が含まれることを確認
+
+2. **ブックマーク作成テスト**
+   ```bash
+   curl -X POST http://localhost:3000/api/v2/user/bookmarks \
+     -H "Authorization: Bearer <access_token>" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "name": "テストブックマーク",
+       "coordinates": [139.7671, 35.6812],
+       "category": "station",
+       "tags": ["test"]
+     }'
+   ```
+   - ステータス201が返されることを確認
+   - 作成されたブックマーク情報が返されることを確認
+
+3. **ユーザー設定取得テスト**
+   ```bash
+   curl -H "Authorization: Bearer <access_token>" \
+     http://localhost:3000/api/v2/user/preferences
+   ```
+   - ユーザー設定が返されることを確認
+   - 言語・テーマ・単位などの設定が含まれることを確認
+
+4. **ユーザー設定更新テスト**
+   ```bash
+   curl -X PUT http://localhost:3000/api/v2/user/preferences \
+     -H "Authorization: Bearer <access_token>" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "language": "en",
+       "theme": "dark",
+       "units": "imperial"
+     }'
+   ```
+   - 設定が正常に更新されることを確認
+   - 更新された設定が返されることを確認
+
+5. **検索履歴取得テスト**
+   ```bash
+   curl -H "Authorization: Bearer <access_token>" \
+     http://localhost:3000/api/v2/user/search-history
+   ```
+   - 検索履歴が返されることを確認
+   - 時系列順で並んでいることを確認
+
+6. **認証なしアクセステスト**
+   ```bash
+   curl http://localhost:3000/api/v2/user/bookmarks
+   ```
+   - ステータス401が返されることを確認
+   - 認証が必要である旨のメッセージが表示されることを確認
+
+#### 期待結果
+- ✅ ユーザーデータの取得・更新が正常に動作する
+- ✅ 認証が適切に機能する
+- ✅ データの整合性が保たれる
+
+---
+
+### TS-062: セキュリティ機能テスト
+
+#### 前提条件
+- API Gatewayが正常に起動している
+
+#### テスト手順
+1. **レート制限テスト**
+   ```bash
+   # 短時間で大量のリクエストを送信
+   for i in {1..100}; do
+     curl -H "X-API-Key: test-api-key-12345" \
+       http://localhost:3000/api/v2/maps/styles &
+   done
+   wait
+   ```
+   - 一定数以上のリクエストでステータス429が返されることを確認
+   - 適切なレート制限メッセージが表示されることを確認
+
+2. **CORS設定テスト**
+   ```bash
+   curl -H "Origin: https://malicious-site.com" \
+     -H "X-API-Key: test-api-key-12345" \
+     http://localhost:3000/api/v2/maps/styles
+   ```
+   - 許可されていないオリジンからのアクセスが制限されることを確認
+
+3. **セキュリティヘッダーテスト**
+   ```bash
+   curl -I http://localhost:3000/health
+   ```
+   - X-Frame-Options, X-Content-Type-Options等のセキュリティヘッダーが設定されることを確認
+
+4. **入力検証テスト**
+   ```bash
+   curl -X POST http://localhost:3000/api/v2/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{
+       "email": "<script>alert(\"xss\")</script>",
+       "password": "test",
+       "name": "test"
+     }'
+   ```
+   - XSS攻撃文字列が適切に無害化されることを確認
+   - ステータス400が返されることを確認
+
+5. **SQLインジェクション対策テスト**
+   ```bash
+   curl -H "X-API-Key: test-api-key-12345" \
+     "http://localhost:3000/api/v2/search/geocode?q='; DROP TABLE users; --"
+   ```
+   - SQLインジェクション攻撃が無効化されることを確認
+   - 正常なエラーレスポンスが返されることを確認
+
+#### 期待結果
+- ✅ レート制限が適切に動作する
+- ✅ CORS設定が正しく機能する
+- ✅ セキュリティヘッダーが設定される
+- ✅ 入力検証が適切に動作する
+- ✅ SQLインジェクション攻撃が防がれる
+
+---
+
+### TS-063: パフォーマンステスト
+
+#### 前提条件
+- パフォーマンス測定ツール（Apache Bench等）が利用可能
+
+#### テスト手順
+1. **同時接続テスト**
+   ```bash
+   ab -n 1000 -c 10 -H "X-API-Key: test-api-key-12345" \
+     http://localhost:3000/api/v2/maps/styles
+   ```
+   - 1000リクエスト、10同時接続での応答時間を測定
+   - 平均応答時間が500ms以内であることを確認
+   - エラー率が1%以下であることを確認
+
+2. **メモリ使用量テスト**
+   ```bash
+   # Docker Statsでメモリ使用量を監視
+   docker stats api-gateway
+   ```
+   - 長時間運用でメモリリークが発生しないことを確認
+   - メモリ使用量が安定していることを確認
+
+3. **データベース接続プールテスト**
+   ```bash
+   # 大量の同時データベースアクセス
+   ab -n 500 -c 20 -H "Authorization: Bearer <token>" \
+     http://localhost:3000/api/v2/user/bookmarks
+   ```
+   - データベース接続プールが適切に動作することを確認
+   - 接続エラーが発生しないことを確認
+
+4. **キャッシュ効果テスト**
+   ```bash
+   # 同じリクエストを複数回実行
+   time curl -H "X-API-Key: test-api-key-12345" \
+     http://localhost:3000/api/v2/maps/styles
+   ```
+   - 2回目以降のリクエストが高速化されることを確認
+   - Redisキャッシュが効果的に動作することを確認
+
+#### 期待結果
+- ✅ 高負荷時も安定して動作する
+- ✅ メモリ使用量が適切に管理される
+- ✅ データベース接続が効率的に管理される
+- ✅ キャッシュが効果的に動作する
+
+---
+
+### TS-064: エラーハンドリングテスト
+
+#### 前提条件
+- API Gatewayが正常に起動している
+
+#### テスト手順
+1. **404エラーテスト**
+   ```bash
+   curl http://localhost:3000/api/v2/nonexistent
+   ```
+   - ステータス404が返されることを確認
+   - 適切なエラーメッセージが表示されることを確認
+
+2. **500エラーテスト**
+   ```bash
+   # データベース接続を一時的に切断してテスト
+   curl -H "Authorization: Bearer <token>" \
+     http://localhost:3000/api/v2/user/bookmarks
+   ```
+   - ステータス500が返されることを確認
+   - 内部エラーの詳細が外部に漏れないことを確認
+
+3. **バリデーションエラーテスト**
+   ```bash
+   curl -X POST http://localhost:3000/api/v2/routing/calculate \
+     -H "X-API-Key: test-api-key-12345" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "origin": "invalid",
+       "destination": [139.6917, 35.6895]
+     }'
+   ```
+   - ステータス400が返されることを確認
+   - 具体的なバリデーションエラーが表示されることを確認
+
+4. **タイムアウトテスト**
+   ```bash
+   # 非常に重い処理をリクエスト（該当する場合）
+   curl --max-time 30 -H "X-API-Key: test-api-key-12345" \
+     http://localhost:3000/api/v2/routing/calculate
+   ```
+   - 適切なタイムアウト処理が動作することを確認
+
+#### 期待結果
+- ✅ 各種エラーが適切に処理される
+- ✅ エラーメッセージが分かりやすい
+- ✅ セキュリティ情報が漏洩しない
+- ✅ タイムアウト処理が適切に動作する
+
+---
+
+### TS-065: 統合テスト（フロントエンド連携）
+
+#### 前提条件
+- フロントエンドアプリケーションが利用可能
+- API Gatewayが正常に起動している
+
+#### テスト手順
+1. **フロントエンド地図表示テスト**
+   - フロントエンドアプリケーションを起動
+   - 地図が正常に表示されることを確認
+   - API Gatewayから地図タイルが正しく取得されることを確認
+
+2. **フロントエンド検索機能テスト**
+   - 検索ボックスに「東京駅」を入力
+   - API Gatewayの検索APIが呼び出されることを確認
+   - 検索結果が正しく表示されることを確認
+
+3. **フロントエンドルート機能テスト**
+   - 出発地・目的地を設定
+   - API GatewayのルーティングAPIが呼び出されることを確認
+   - ルートが地図上に正しく表示されることを確認
+
+4. **フロントエンド認証機能テスト**
+   - ユーザー登録・ログイン機能をテスト
+   - API Gatewayの認証APIが正しく動作することを確認
+   - 認証後にユーザー専用機能が利用可能になることを確認
+
+#### 期待結果
+- ✅ フロントエンドとAPI Gatewayが正しく連携する
+- ✅ 全ての機能が統合環境で正常に動作する
+- ✅ ユーザーエクスペリエンスが向上している
+
+---
+
+## 📊 API Gateway テスト実行チェックリスト
+
+### 事前準備
+- [ ] Docker Compose環境の起動
+- [ ] データベース初期化の確認
+- [ ] テスト用APIキーの設定
+- [ ] テストツール（curl, ab等）の準備
+
+### 基盤機能テスト
+- [ ] TS-055: API Gateway基盤機能テスト
+- [ ] TS-056: 認証システムテスト
+- [ ] TS-057: APIキー認証テスト
+
+### API機能テスト
+- [ ] TS-058: 地図API機能テスト
+- [ ] TS-059: 検索API機能テスト
+- [ ] TS-060: ルーティングAPI機能テスト
+- [ ] TS-061: ユーザーデータAPI機能テスト
+
+### 品質・セキュリティテスト
+- [ ] TS-062: セキュリティ機能テスト
+- [ ] TS-063: パフォーマンステスト
+- [ ] TS-064: エラーハンドリングテスト
+
+### 統合テスト
+- [ ] TS-065: 統合テスト（フロントエンド連携）
+
+### 結果記録
+- [ ] 各テストの実行結果記録
+- [ ] パフォーマンス測定値の記録
+- [ ] 発見された問題の記録
+- [ ] 改善提案の作成
+
+---
+
+## 🎯 API Gateway テスト完了基準
+
+### 機能テスト
+- [ ] 全API機能テストケースが成功
+- [ ] 認証・認可が正常に動作
+- [ ] エラーハンドリングが適切に動作
+
+### セキュリティテスト
+- [ ] レート制限が正常に動作
+- [ ] 入力検証が適切に動作
+- [ ] セキュリティヘッダーが設定される
+
+### パフォーマンステスト
+- [ ] 応答時間が基準内（平均500ms以下）
+- [ ] 同時接続数の要件を満たす
+- [ ] メモリ使用量が安定している
+
+### 統合テスト
+- [ ] フロントエンドとの連携が正常
+- [ ] エンドツーエンドでの動作確認
+- [ ] ユーザーシナリオの完全動作
+
+---
+
+**API Gateway テストシナリオ**: v2.0.0  
+**作成日**: 2025年8月17日  
+**テスト対象**: Kiro OSS Map API Gateway  
+**次回レビュー**: テスト実行完了後

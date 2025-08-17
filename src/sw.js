@@ -76,8 +76,9 @@ self.addEventListener('activate', event => {
         return self.clients.claim();
       })
   );
-});/
-/ Fetch event - advanced caching strategies
+});
+
+// Fetch event - advanced caching strategies
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
