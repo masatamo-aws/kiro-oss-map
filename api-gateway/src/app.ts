@@ -20,6 +20,10 @@ import { mapsRoutes } from './routes/maps';
 import { searchRoutes } from './routes/search';
 import { routingRoutes } from './routes/routing';
 import { userRoutes } from './routes/user';
+import { metricsRoutes } from './routes/metrics';
+
+// Import middleware
+import { collectMetrics } from './middleware/metrics';
 
 const app = express();
 
@@ -60,6 +64,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Request logging
 app.use(requestLogger);
 
+// Metrics collection
+app.use(collectMetrics());
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -90,6 +97,9 @@ app.use(limiter);
 // Health check routes (no authentication required)
 app.use('/health', healthRoutes);
 app.use('/api/v2/health', healthRoutes);
+
+// Metrics routes (no authentication required for monitoring)
+app.use('/', metricsRoutes);
 
 // Authentication routes (no API key required)
 app.use('/api/v2/auth', authRoutes);

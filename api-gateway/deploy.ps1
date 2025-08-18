@@ -1,9 +1,13 @@
 # Kiro OSS Map API Gateway Deployment Script (PowerShell)
-# Version: 2.0.0
+# Version: 2.0.0 Enhanced
 
 param(
     [string]$Environment = "production",
-    [switch]$WithMonitoring
+    [string]$Version = "2.0.0",
+    [switch]$WithMonitoring,
+    [switch]$SkipBuild = $false,
+    [switch]$SkipTests = $false,
+    [switch]$DryRun = $false
 )
 
 # Configuration

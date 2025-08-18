@@ -4,6 +4,8 @@
 
 import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../middleware/errorHandler';
+import { databaseService } from '../services/database';
+import { redisService } from '../services/redis';
 
 const router = Router();
 
@@ -43,16 +45,14 @@ router.get('/detailed', asyncHandler(async (req: Request, res: Response) => {
 }));
 
 // Database health check
-async function checkDatabase(): Promise<{ status: string; responseTime?: number; error?: string }> {
+async function checkDatabase(): Promise<{ status: string; responseTime?: number; error?: string; connectionCount?: number }> {
   try {
-    const start = Date.now();
-    // Mock database connection check - simulate healthy connection
-    await new Promise(resolve => setTimeout(resolve, 10)); // Simulate DB query
-    const responseTime = Date.now() - start;
-    
+    const result = await databaseService.healthCheck();
     return {
-      status: 'ok',
-      responseTime
+      status: result.status,
+      responseTime: result.responseTime,
+      error: result.error,
+      connectionCount: result.connectionCount
     };
   } catch (error) {
     return {
@@ -63,16 +63,15 @@ async function checkDatabase(): Promise<{ status: string; responseTime?: number;
 }
 
 // Redis health check
-async function checkRedis(): Promise<{ status: string; responseTime?: number; error?: string }> {
+async function checkRedis(): Promise<{ status: string; responseTime?: number; error?: string; memoryUsage?: string; connectedClients?: number }> {
   try {
-    const start = Date.now();
-    // Mock Redis connection check - simulate healthy connection
-    await new Promise(resolve => setTimeout(resolve, 5)); // Simulate Redis ping
-    const responseTime = Date.now() - start;
-    
+    const result = await redisService.healthCheck();
     return {
-      status: 'ok',
-      responseTime
+      status: result.status,
+      responseTime: result.responseTime,
+      error: result.error,
+      memoryUsage: result.memoryUsage,
+      connectedClients: result.connectedClients
     };
   } catch (error) {
     return {
@@ -85,27 +84,40 @@ async function checkRedis(): Promise<{ status: string; responseTime?: number; er
 // External APIs health check
 async function checkExternalAPIs(): Promise<{ status: string; apis?: any; error?: string }> {
   try {
-    // In test environment, mock the external API checks
-    if (process.env.NODE_ENV === 'test') {
+    // In development/test environment, mock the external API checks
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
       return {
         status: 'ok',
         apis: {
-          nominatim: { status: 'ok', responseTime: 50 },
-          osrm: { status: 'ok', responseTime: 30 }
+          nominatim: { status: 'ok', responseTime: 50, note: 'mocked in development' },
+          osrm: { status: 'ok', responseTime: 30, note: 'mocked in development' },
+          mapTiles: { status: 'ok', responseTime: 25, note: 'mocked in development' }
         }
       };
     }
 
-    const apis = {
-      nominatim: await checkAPI('https://nominatim.openstreetmap.org/status'),
-      osrm: await checkAPI('https://router.project-osrm.org/health')
-    };
+    // In production, perform actual health checks with timeout
+    const apis = await Promise.allSettled([
+      checkAPIWithTimeout('https://nominatim.openstreetmap.org/status', 'nominatim'),
+      checkAPIWithTimeout('https://router.project-osrm.org/health', 'osrm'),
+      checkAPIWithTimeout('https://tile.openstreetmap.org/0/0/0.png', 'mapTiles')
+    ]);
 
-    const allHealthy = Object.values(apis).every(api => api.status === 'ok');
+    const results: any = {};
+    apis.forEach((result, index) => {
+      const names = ['nominatim', 'osrm', 'mapTiles'];
+      if (result.status === 'fulfilled') {
+        results[names[index]] = result.value;
+      } else {
+        results[names[index]] = { status: 'error', error: 'timeout or connection failed' };
+      }
+    });
+
+    const allHealthy = Object.values(results).every((api: any) => api.status === 'ok');
     
     return {
       status: allHealthy ? 'ok' : 'degraded',
-      apis
+      apis: results
     };
   } catch (error) {
     return {
@@ -115,25 +127,45 @@ async function checkExternalAPIs(): Promise<{ status: string; apis?: any; error?
   }
 }
 
-// Generic API health check
-async function checkAPI(url: string): Promise<{ status: string; responseTime?: number }> {
+// Generic API health check with timeout
+async function checkAPIWithTimeout(url: string, name: string): Promise<{ status: string; responseTime?: number; name: string }> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
   try {
     const start = Date.now();
     const response = await fetch(url, { 
-      method: 'GET',
-      // timeout: 5000 // Remove timeout for now 
+      method: 'HEAD', // Use HEAD to reduce bandwidth
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Kiro-OSS-Map-HealthCheck/2.0.0'
+      }
     });
+    clearTimeout(timeoutId);
     const responseTime = Date.now() - start;
     
     return {
+      name,
       status: response.ok ? 'ok' : 'error',
       responseTime
     };
   } catch (error) {
+    clearTimeout(timeoutId);
     return {
-      status: 'error'
+      name,
+      status: 'error',
+      responseTime: 5000 // timeout duration
     };
   }
+}
+
+// Legacy function for backward compatibility
+async function checkAPI(url: string): Promise<{ status: string; responseTime?: number }> {
+  const result = await checkAPIWithTimeout(url, 'legacy');
+  return {
+    status: result.status,
+    responseTime: result.responseTime
+  };
 }
 
 export { router as healthRoutes };
