@@ -387,7 +387,10 @@ export class MapService {
       // Load additional data when popup opens
       popup.on('open', () => {
         if (options.data) {
-          this.loadPopupEnhancements(popup, options.data);
+          // 少し遅延させてDOMが確実に準備されるようにする
+          setTimeout(() => {
+            this.loadPopupEnhancements(popup, options.data);
+          }, 100);
         }
       });
     }
@@ -426,10 +429,10 @@ export class MapService {
         </div>
         
         <div class="popup-content">
-          ${data.address ? `<p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${data.address}</p>` : ''}
+          ${data.address ? `<p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${typeof data.address === 'string' ? data.address : JSON.stringify(data.address)}</p>` : ''}
           
           <div class="popup-coordinates text-xs text-gray-500 dark:text-gray-500 mb-3">
-            ${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}
+            ${typeof data.latitude === 'number' ? data.latitude.toFixed(6) : data.latitude}, ${typeof data.longitude === 'number' ? data.longitude.toFixed(6) : data.longitude}
           </div>
           
           <div class="popup-actions flex space-x-2">
@@ -453,27 +456,42 @@ export class MapService {
 
   async loadPopupEnhancements(popup, data) {
     try {
-      // Import ImageService dynamically to avoid circular dependencies
-      const { ImageService } = await import('./ImageService.js');
-      const imageService = new ImageService();
-      
-      // Get location image
-      const imageData = await imageService.getLocationImage(data);
+      // Get location image directly without external API dependencies
+      const imageData = await this.getLocationImage(data);
       
       if (imageData) {
         const imageContainer = document.getElementById(`image-container-${data.id}`);
+        
         if (imageContainer) {
           imageContainer.innerHTML = `
             <img src="${imageData.url}" 
-                 alt="${data.name}" 
+                 alt="${data.name || data.displayName}" 
                  class="w-full h-32 object-cover rounded-lg"
-                 onerror="this.parentElement.innerHTML='<div class=\\'text-gray-400 dark:text-gray-500 text-sm\\'>画像を読み込めませんでした</div>'"
+                 loading="lazy"
+                 onload="this.style.opacity='1'; this.nextElementSibling.style.display='block';"
+                 onerror="console.warn('Image failed to load:', this.src); this.parentElement.innerHTML='<div class=\\'text-gray-400 dark:text-gray-500 text-sm flex items-center justify-center h-32\\'>画像を読み込めませんでした<br><small>${imageData.source}</small></div>'"
+                 style="opacity: 0; transition: opacity 0.3s ease;"
             >
-            <div class="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
-              ${imageData.source}
+            <div class="absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded" style="display: none;">
+              ${imageData.source}${imageData.title ? ` - ${imageData.title}` : ''}
             </div>
           `;
           imageContainer.classList.add('relative');
+        } else {
+          // 再試行: より一般的なセレクタで検索
+          const fallbackContainer = popup.getElement().querySelector('.popup-image div');
+          if (fallbackContainer) {
+            fallbackContainer.innerHTML = `
+              <img src="${imageData.url}" 
+                   alt="${data.name || data.displayName}" 
+                   class="w-full h-32 object-cover rounded-lg"
+                   loading="lazy"
+                   style="opacity: 0; transition: opacity 0.3s ease;"
+                   onload="this.style.opacity='1';"
+              >
+            `;
+            fallbackContainer.classList.add('relative');
+          }
         }
       }
 
@@ -483,6 +501,259 @@ export class MapService {
     } catch (error) {
       Logger.error('Failed to load popup enhancements', error, 'popup-enhancement');
     }
+  }
+
+  /**
+   * 地点の画像を取得する
+   */
+  async getLocationImage(location) {
+    try {
+      // タイムアウト付きで画像を取得
+      const timeout = 5000; // 5秒タイムアウト
+
+      // Wikipedia画像を優先的に取得
+      try {
+        const wikipediaImage = await Promise.race([
+          this.getWikipediaImage(location),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
+        ]);
+        if (wikipediaImage) {
+          return wikipediaImage;
+        }
+      } catch (e) {
+        console.warn('Wikipedia image fetch timed out or failed:', e.message);
+      }
+
+      // Unsplash画像をフォールバック
+      try {
+        const unsplashImage = await Promise.race([
+          this.getUnsplashImage(location),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
+        ]);
+        if (unsplashImage) {
+          return unsplashImage;
+        }
+      } catch (e) {
+        console.warn('Unsplash image fetch timed out or failed:', e.message);
+      }
+
+      // デフォルト画像
+      return this.getDefaultLocationImage(location);
+    } catch (error) {
+      Logger.error('Failed to get location image', { location, error: error.message });
+      return this.getDefaultLocationImage(location);
+    }
+  }
+
+  /**
+   * Wikipedia画像を取得
+   */
+  async getWikipediaImage(location) {
+    try {
+      const searchTerm = location.name || location.displayName;
+      if (!searchTerm) return null;
+
+      // 複数の検索方法を試す
+      const searchTerms = [
+        searchTerm,
+        searchTerm.replace(/\s+/g, '_'), // スペースをアンダースコアに
+        searchTerm.split(/[,\s]+/)[0], // 最初の単語のみ
+      ];
+
+      for (const term of searchTerms) {
+        try {
+          // Wikipedia REST API (CORS対応)
+          const wikipediaUrl = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}`;
+          
+          const response = await fetch(wikipediaUrl, {
+            mode: 'cors',
+            headers: {
+              'Accept': 'application/json',
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            
+            if (data.thumbnail && data.thumbnail.source) {
+              return {
+                url: data.thumbnail.source,
+                source: 'Wikipedia',
+                description: data.description || data.extract || term,
+                title: data.title
+              };
+            }
+          }
+        } catch (e) {
+          console.warn(`Wikipedia search failed for term: ${term}`, e);
+          continue;
+        }
+      }
+
+      // フォールバック: Wikipedia検索API
+      try {
+        const searchUrl = `https://ja.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages&generator=search&piprop=thumbnail&pithumbsize=300&gsrsearch=${encodeURIComponent(searchTerm)}&gsrlimit=1&origin=*`;
+        
+        const response = await fetch(searchUrl);
+        if (response.ok) {
+          const data = await response.json();
+          const pages = data.query?.pages;
+          
+          if (pages) {
+            const pageId = Object.keys(pages)[0];
+            const page = pages[pageId];
+            
+            if (page.thumbnail) {
+              return {
+                url: page.thumbnail.source,
+                source: 'Wikipedia',
+                description: page.title,
+                title: page.title
+              };
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Wikipedia search API failed:', e);
+      }
+
+      return null;
+    } catch (error) {
+      console.warn('Wikipedia image fetch failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Unsplash画像を取得
+   */
+  async getUnsplashImage(location) {
+    try {
+      const searchTerm = location.name || location.displayName || location.category;
+      if (!searchTerm) return null;
+
+      // Unsplash Source API (無料、認証不要)
+      const imageUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(searchTerm)}`;
+      
+      // 画像が存在するかチェック
+      const response = await fetch(imageUrl, { method: 'HEAD' });
+      
+      if (response.ok) {
+        return {
+          url: imageUrl,
+          source: 'Unsplash',
+          description: `${searchTerm}の画像`,
+          searchTerm: searchTerm
+        };
+      }
+
+      // カテゴリベースの検索も試す
+      if (location.category && location.category !== searchTerm) {
+        const categoryImageUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(location.category)}`;
+        const categoryResponse = await fetch(categoryImageUrl, { method: 'HEAD' });
+        
+        if (categoryResponse.ok) {
+          return {
+            url: categoryImageUrl,
+            source: 'Unsplash',
+            description: `${location.category}の画像`,
+            searchTerm: location.category
+          };
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.warn('Unsplash image fetch failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Google Places Photo APIを取得（オプション）
+   */
+  async getGooglePlacesImage(location) {
+    try {
+      // Google Places APIキーが必要
+      const apiKey = 'YOUR_GOOGLE_PLACES_API_KEY'; // 実際のキーに置き換える
+      if (apiKey === 'YOUR_GOOGLE_PLACES_API_KEY') {
+        return null;
+      }
+
+      const searchTerm = location.name || location.displayName;
+      if (!searchTerm) return null;
+
+      // Places Text Search API
+      const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchTerm)}&key=${apiKey}`;
+      
+      const response = await fetch(searchUrl);
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      
+      if (data.results && data.results.length > 0) {
+        const place = data.results[0];
+        if (place.photos && place.photos.length > 0) {
+          const photoReference = place.photos[0].photo_reference;
+          const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${apiKey}`;
+          
+          return {
+            url: photoUrl,
+            source: 'Google Places',
+            description: place.name,
+            rating: place.rating
+          };
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.warn('Google Places image fetch failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * デフォルト画像を取得
+   */
+  getDefaultLocationImage(location) {
+    const category = location.category || 'default';
+    
+    // カテゴリ別のアイコン色
+    const categoryColors = {
+      'レストラン': '#FF6B6B',
+      'カフェ': '#4ECDC4', 
+      'ホテル': '#45B7D1',
+      '病院': '#96CEB4',
+      '学校': '#FFEAA7',
+      '銀行': '#DDA0DD',
+      'コンビニ': '#98D8C8',
+      'commercial': '#9B59B6',
+      'default': '#6C5CE7'
+    };
+    
+    const color = categoryColors[category] || categoryColors.default;
+    
+    // SVG画像を生成
+    const svg = `<svg width="200" height="128" viewBox="0 0 200 128" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="128" fill="${color}" opacity="0.1"/>
+        <circle cx="100" cy="64" r="30" fill="${color}" opacity="0.8"/>
+        <text x="100" y="70" text-anchor="middle" fill="white" font-size="12" font-weight="bold">
+          ${category.charAt(0)}
+        </text>
+        <text x="100" y="110" text-anchor="middle" fill="${color}" font-size="10">
+          ${category}
+        </text>
+      </svg>`;
+    
+    const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    
+    return {
+      url: svgUrl,
+      source: 'default',
+      description: `${category}の画像`
+    };
   }
 
   addPopupActionHandlers(popupElement) {
@@ -658,10 +929,6 @@ export class MapService {
 
   getCenter() {
     return this.isInitialized ? this.map.getCenter() : null;
-  }
-
-  getZoom() {
-    return this.isInitialized ? this.map.getZoom() : null;
   }
 
   getZoom() {

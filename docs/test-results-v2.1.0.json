@@ -1,0 +1,129 @@
+{
+  "timestamp": "2025-08-19T17:20:49.131Z",
+  "version": "v2.1.0",
+  "services": {
+    "auth-service": {
+      "name": "auth-service",
+      "port": 3001,
+      "tests": [
+        {
+          "name": "Health Check",
+          "status": "passed",
+          "statusCode": 200,
+          "responseTime": 52,
+          "details": "Service is healthy"
+        },
+        {
+          "name": "Detailed Health Check",
+          "status": "passed",
+          "statusCode": 200,
+          "responseTime": 58,
+          "details": "Detailed health check passed"
+        },
+        {
+          "name": "Metrics Endpoint",
+          "status": "passed",
+          "statusCode": 200,
+          "responseTime": 64,
+          "details": "Metrics available"
+        },
+        {
+          "name": "Register Endpoint",
+          "status": "passed",
+          "statusCode": 400,
+          "details": "Register endpoint is accessible"
+        }
+      ],
+      "status": "passed",
+      "startTime": 1755624049139,
+      "endTime": 1755624049204,
+      "duration": 65
+    },
+    "map-service": {
+      "name": "map-service",
+      "port": 3002,
+      "tests": [
+        {
+          "name": "Health Check",
+          "status": "passed",
+          "statusCode": 200,
+          "responseTime": 6,
+          "details": "Service is healthy"
+        },
+        {
+          "name": "Detailed Health Check",
+          "status": "passed",
+          "statusCode": 200,
+          "responseTime": 11,
+          "details": "Detailed health check passed"
+        },
+        {
+          "name": "Metrics Endpoint",
+          "status": "passed",
+          "statusCode": 200,
+          "responseTime": 14,
+          "details": "Metrics available"
+        },
+        {
+          "name": "Tile Stats Endpoint",
+          "status": "passed",
+          "statusCode": 200,
+          "details": "Tile stats endpoint is accessible"
+        },
+        {
+          "name": "Styles Endpoint",
+          "status": "passed",
+          "statusCode": 200,
+          "details": "Styles endpoint is accessible"
+        }
+      ],
+      "status": "passed",
+      "startTime": 1755624049233,
+      "endTime": 1755624049247,
+      "duration": 14
+    },
+    "search-service": {
+      "name": "search-service",
+      "port": 3003,
+      "tests": [
+        {
+          "name": "Health Check",
+          "status": "passed",
+          "statusCode": 200,
+          "responseTime": 8,
+          "details": "Service is healthy"
+        },
+        {
+          "name": "Detailed Health Check",
+          "status": "passed",
+          "statusCode": 200,
+          "responseTime": 12,
+          "details": "Detailed health check passed"
+        },
+        {
+          "name": "Metrics Endpoint",
+          "status": "passed",
+          "statusCode": 200,
+          "responseTime": 15,
+          "details": "Metrics available"
+        },
+        {
+          "name": "Search Endpoint",
+          "status": "passed",
+          "statusCode": 200,
+          "details": "Search endpoint is accessible"
+        }
+      ],
+      "status": "passed",
+      "startTime": 1755624049254,
+      "endTime": 1755624049269,
+      "duration": 15
+    }
+  },
+  "summary": {
+    "total": 13,
+    "passed": 13,
+    "failed": 0,
+    "skipped": 0
+  }
+}

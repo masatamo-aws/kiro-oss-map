@@ -1,0 +1,77 @@
+{
+  "name": "@kiro/search-service",
+  "version": "2.1.0",
+  "description": "Kiro OSS Map Search Service - マイクロサービス検索・ジオコーディングシステム",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "type-check": "tsc --noEmit",
+    "docker:build": "docker build -t kiro/search-service:v2.1.0 .",
+    "docker:run": "docker run -p 3003:3003 kiro/search-service:v2.1.0"
+  },
+  "keywords": [
+    "kiro",
+    "map",
+    "search",
+    "geocoding",
+    "elasticsearch",
+    "microservice",
+    "typescript",
+    "express"
+  ],
+  "author": "Kiro AI Assistant",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "helmet": "^7.0.0",
+    "cors": "^2.8.5",
+    "compression": "^1.7.4",
+    "express-rate-limit": "^6.10.0",
+    "express-validator": "^7.0.1",
+    "@elastic/elasticsearch": "^8.9.0",
+    "redis": "^4.6.8",
+    "joi": "^17.9.2",
+    "prom-client": "^14.2.0",
+    "@opentelemetry/api": "^1.4.1",
+    "winston": "^3.10.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.5.0",
+    "@types/cors": "^2.8.13",
+    "@types/compression": "^1.7.2",
+    "@types/jest": "^29.5.4",
+    "@types/supertest": "^2.0.12",
+    "typescript": "^5.1.6",
+    "tsx": "^3.12.7",
+    "jest": "^29.6.2",
+    "ts-jest": "^29.1.1",
+    "supertest": "^6.3.3",
+    "eslint": "^8.47.0",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@typescript-eslint/parser": "^6.4.0",
+    "prettier": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/masatamo-aws/kiro-oss-map.git",
+    "directory": "services/search"
+  },
+  "bugs": {
+    "url": "https://github.com/masatamo-aws/kiro-oss-map/issues"
+  },
+  "homepage": "https://github.com/masatamo-aws/kiro-oss-map#readme"
+}

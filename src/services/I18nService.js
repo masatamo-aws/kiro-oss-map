@@ -271,6 +271,22 @@ export class I18nService {
       'settings.theme.dark': 'ダーク',
       'settings.theme.auto': '自動',
 
+      // Transit
+      'transit.title': '公共交通',
+      'transit.from': '出発地',
+      'transit.to': '目的地',
+      'transit.depart_at': '出発時刻',
+      'transit.arrive_by': '到着時刻',
+      'transit.now': '今すぐ',
+      'transit.optimize': '最適化',
+      'transit.optimize_time': '最短時間',
+      'transit.optimize_transfers': '乗り換え最小',
+      'transit.optimize_cost': '最安料金',
+      'transit.wheelchair': '車椅子対応',
+      'transit.search': 'ルート検索',
+      'transit.searching': 'ルート検索中...',
+      'transit.no_routes': 'ルートが見つかりません',
+
       // Errors
       'error.networkError': 'ネットワークエラーが発生しました',
       'error.locationNotFound': '位置情報が見つかりません',
@@ -372,6 +388,22 @@ export class I18nService {
       'settings.theme.light': 'Light',
       'settings.theme.dark': 'Dark',
       'settings.theme.auto': 'Auto',
+
+      // Transit
+      'transit.title': 'Public Transit',
+      'transit.from': 'From',
+      'transit.to': 'To',
+      'transit.depart_at': 'Depart at',
+      'transit.arrive_by': 'Arrive by',
+      'transit.now': 'Now',
+      'transit.optimize': 'Optimize for',
+      'transit.optimize_time': 'Fastest',
+      'transit.optimize_transfers': 'Fewest transfers',
+      'transit.optimize_cost': 'Lowest cost',
+      'transit.wheelchair': 'Wheelchair accessible',
+      'transit.search': 'Search Routes',
+      'transit.searching': 'Searching routes...',
+      'transit.no_routes': 'No routes found',
 
       // Errors
       'error.networkError': 'Network error occurred',
@@ -616,4 +648,9 @@ export class I18nService {
     }
     return I18nService.instance;
   }
+}
+
+// Export function for easy access
+export function getI18nService() {
+  return I18nService.getInstance();
 }

@@ -109,11 +109,14 @@ export class SearchService {
       return data.map(item => ({
         id: item.place_id,
         name: item.display_name,
+        displayName: item.display_name,
         lat: parseFloat(item.lat),
         lng: parseFloat(item.lon),
+        latitude: parseFloat(item.lat),
+        longitude: parseFloat(item.lon),
         type: item.type,
-        category: item.class,
-        address: item.address,
+        category: this.parseCategory(item),
+        address: this.parseAddress(item.address),
         boundingbox: item.boundingbox,
         importance: item.importance || 0
       }));
@@ -223,6 +226,103 @@ export class SearchService {
     if (address.country) parts.push(address.country);
     
     return parts.join(', ');
+  }
+
+  /**
+   * 地点の画像を取得する
+   */
+  async getImageForLocation(location) {
+    try {
+      // Wikipedia画像を優先的に取得
+      const wikipediaImage = await this.getWikipediaImage(location);
+      if (wikipediaImage) {
+        return wikipediaImage;
+      }
+
+      // Unsplash画像をフォールバック
+      const unsplashImage = await this.getUnsplashImage(location);
+      if (unsplashImage) {
+        return unsplashImage;
+      }
+
+      // デフォルト画像
+      return this.getDefaultImage(location);
+    } catch (error) {
+      Logger.error('Failed to get image for location', { location, error: error.message });
+      return this.getDefaultImage(location);
+    }
+  }
+
+  /**
+   * Wikipedia画像を取得
+   */
+  async getWikipediaImage(location) {
+    try {
+      const searchTerm = location.displayName || location.name;
+      const response = await fetch(
+        `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.thumbnail && data.thumbnail.source) {
+          return {
+            url: data.thumbnail.source,
+            source: 'wikipedia',
+            description: data.description || data.extract
+          };
+        }
+      }
+    } catch (error) {
+      Logger.warn('Wikipedia image fetch failed', { error: error.message });
+    }
+    return null;
+  }
+
+  /**
+   * Unsplash画像を取得
+   */
+  async getUnsplashImage(location) {
+    try {
+      const searchTerm = location.displayName || location.name;
+      const response = await fetch(
+        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchTerm)}&per_page=1&client_id=demo`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+          const photo = data.results[0];
+          return {
+            url: photo.urls.small,
+            source: 'unsplash',
+            description: photo.description || photo.alt_description,
+            photographer: photo.user.name
+          };
+        }
+      }
+    } catch (error) {
+      Logger.warn('Unsplash image fetch failed', { error: error.message });
+    }
+    return null;
+  }
+
+  /**
+   * デフォルト画像を取得
+   */
+  getDefaultImage(location) {
+    const category = location.category || 'default';
+    const defaultImages = {
+      'レストラン': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNTBMMTUwIDEwMEgxMDBWMTUwSDUwVjEwMEgxMDBWNTBaIiBmaWxsPSIjNjM2NjZBIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjM2NjZBIiBmb250LXNpemU9IjE0Ij5SZXN0YXVyYW50PC90ZXh0Pgo8L3N2Zz4=',
+      'カフェ': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjEwMCIgcj0iNDAiIGZpbGw9IiM2MzY2NkEiLz4KPHR4dCB4PSIxMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzYzNjY2QSIgZm9udC1zaXplPSIxNCI+Q2FmZTwvdGV4dD4KPC9zdmc+',
+      'default': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiM2MzY2NkEiLz4KPHR4dCB4PSIxMDAiIHk9IjE3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzYzNjY2QSIgZm9udC1zaXplPSIxNCI+UGxhY2U8L3RleHQ+Cjwvc3ZnPg=='
+    };
+
+    return {
+      url: defaultImages[category] || defaultImages.default,
+      source: 'default',
+      description: `${category}の画像`
+    };
   }
 
   parseCategory(item) {

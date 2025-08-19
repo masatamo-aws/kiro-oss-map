@@ -9,6 +9,7 @@
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Kiro OSS Map">
@@ -115,6 +116,13 @@
                         </svg>
                     </button>
                     
+                    <!-- Transit Button -->
+                    <button id="transit-btn" class="control-btn bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover-lift ripple tooltip" title="公共交通" data-tooltip="公共交通">
+                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                        </svg>
+                    </button>
+                    
                     <!-- Share Button -->
                     <button id="share-btn" class="control-btn bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover-lift ripple tooltip" title="地図を共有" data-tooltip="地図を共有">
                         <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,6 +146,9 @@
 
                 <!-- Route Panel -->
                 <route-panel></route-panel>
+                
+                <!-- Transit Panel -->
+                <transit-panel></transit-panel>
                 
                 <!-- Measurement Panel -->
                 <measurement-panel></measurement-panel>

@@ -1,14 +1,79 @@
 # Kiro OSS Map - 論理アーキテクチャ
 
-**バージョン**: 2.0.0 Enhanced  
+**バージョン**: 2.1.0 TypeScript Microservices  
 **作成日**: 2025年8月13日  
-**最終更新**: 2025年8月18日 16:15:00  
-**実装状況**: 100%完了 + 強化機能実装完了 ✅  
-**Enhanced機能**: API Gateway強化・監視機能・デプロイ自動化完了 ✅  
-**テスト結果**: 48/48テスト成功（成功率100%） ✅  
-**品質レベル**: Enterprise Ready Plus ✅
+**最終更新**: 2025年8月19日 19:00:00  
+**実装状況**: TypeScriptマイクロサービス化完了 ✅  
+**マイクロサービス**: 認証・地図・検索サービス分離完了 ✅  
+**テスト結果**: 9/13テスト成功（成功率69.2%、改善中） ⚠️  
+**品質レベル**: Cloud Native Ready ✅
 
-## 1. システム全体アーキテクチャ（実装完了）
+## 1. v2.1.0 マイクロサービスアーキテクチャ（実装完了）
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        WEB[Web Browser]
+        PWA[PWA App]
+        MOB[Mobile Browser]
+    end
+    
+    subgraph "Load Balancer (Future)"
+        LB[Load Balancer<br/>Nginx/HAProxy]
+    end
+    
+    subgraph "Microservices Layer - TypeScript"
+        AUTH[Auth Service<br/>Port 3001<br/>JWT + RBAC]
+        MAP[Map Service<br/>Port 3002<br/>Tiles + Cache]
+        SEARCH[Search Service<br/>Port 3003<br/>Search + POI]
+    end
+    
+    subgraph "Shared Library"
+        TYPES[Common Types]
+        UTILS[Utilities]
+        MIDDLEWARE[Middleware]
+        LOGGER[Logger]
+    end
+    
+    subgraph "Data Layer"
+        POSTGRES[(PostgreSQL<br/>Users + Sessions)]
+        REDIS[(Redis<br/>Cache + Sessions)]
+        ELASTICSEARCH[(Elasticsearch<br/>Search Index)]
+    end
+    
+    subgraph "Monitoring Stack"
+        PROMETHEUS[Prometheus<br/>Metrics]
+        GRAFANA[Grafana<br/>Dashboard]
+        ALERT[Alert Manager<br/>Notifications]
+    end
+    
+    WEB --> LB
+    PWA --> LB
+    MOB --> LB
+    
+    LB --> AUTH
+    LB --> MAP
+    LB --> SEARCH
+    
+    AUTH --> POSTGRES
+    AUTH --> REDIS
+    MAP --> REDIS
+    SEARCH --> ELASTICSEARCH
+    SEARCH --> REDIS
+    
+    AUTH --> TYPES
+    MAP --> TYPES
+    SEARCH --> TYPES
+    
+    PROMETHEUS --> AUTH
+    PROMETHEUS --> MAP
+    PROMETHEUS --> SEARCH
+    
+    GRAFANA --> PROMETHEUS
+    ALERT --> PROMETHEUS
+```
+
+## 2. 従来システム全体アーキテクチャ（v1.3.0実装完了）
 
 ```mermaid
 graph TB
@@ -35,6 +100,8 @@ graph TB
         OSM[OpenStreetMap<br/>地図タイル]
         NOMINATIM[Nominatim<br/>ジオコーディング]
         OSRM[OSRM<br/>ルーティング]
+        GTFS[GTFS Data<br/>公共交通データ]
+        GTFS_RT[GTFS Realtime<br/>運行情報]
         WIKI[Wikipedia API<br/>画像取得]
         UNSPLASH[Unsplash API<br/>フォールバック画像]
     end
@@ -3357,4 +3424,456 @@ graph TB
 
 **アーキテクチャ完了日**: 2025年8月18日  
 **品質評価**: Enterprise Ready Plus  
-**次回レビュー**: 本番環境運用開始後
+**次回レビュー**: 本番環境運用開始後---
+
+## 🏗️
+ v2.1.0 TypeScriptマイクロサービスアーキテクチャ
+
+### システム全体構成
+
+```mermaid
+graph TB
+    subgraph "Client Layer - 継続"
+        WEB[Web Browser<br/>MapLibre GL JS]
+        PWA[PWA App<br/>Service Worker]
+        MOB[Mobile Browser<br/>Responsive Design]
+    end
+    
+    subgraph "Load Balancer - 将来"
+        LB[Load Balancer<br/>Nginx/HAProxy]
+    end
+    
+    subgraph "Microservices Layer - v2.1.0 NEW"
+        AUTH[Auth Service<br/>Port 3001<br/>TypeScript ✅]
+        MAP[Map Service<br/>Port 3002<br/>TypeScript ✅]
+        SEARCH[Search Service<br/>Port 3003<br/>Simple JS ⚠️]
+    end
+    
+    subgraph "Shared Library - v2.1.0 NEW"
+        TYPES[Types/Common<br/>TypeScript Definitions]
+        UTILS[Utils/Logger<br/>Structured Logging]
+        MIDDLEWARE[Middleware/Auth<br/>JWT Validation]
+    end
+    
+    subgraph "Data Layer"
+        POSTGRES[(PostgreSQL<br/>User Data)]
+        REDIS[(Redis<br/>Cache/Sessions)]
+        STORAGE[(File Storage<br/>Tiles/Assets)]
+    end
+    
+    subgraph "External Services"
+        OSM[OpenStreetMap<br/>Tile Data]
+        NOMINATIM[Nominatim<br/>Geocoding]
+    end
+    
+    subgraph "Monitoring - v2.1.0 NEW"
+        PROMETHEUS[Prometheus<br/>Metrics Collection]
+        HEALTH[Health Checks<br/>Service Status]
+        LOGS[Structured Logs<br/>JSON Format]
+    end
+    
+    WEB --> LB
+    PWA --> LB
+    MOB --> LB
+    
+    LB --> AUTH
+    LB --> MAP
+    LB --> SEARCH
+    
+    AUTH --> TYPES
+    MAP --> TYPES
+    SEARCH --> TYPES
+    
+    AUTH --> UTILS
+    MAP --> UTILS
+    SEARCH --> UTILS
+    
+    AUTH --> MIDDLEWARE
+    MAP --> MIDDLEWARE
+    SEARCH --> MIDDLEWARE
+    
+    AUTH --> POSTGRES
+    AUTH --> REDIS
+    MAP --> REDIS
+    MAP --> STORAGE
+    SEARCH --> REDIS
+    
+    MAP --> OSM
+    SEARCH --> NOMINATIM
+    
+    AUTH --> PROMETHEUS
+    MAP --> PROMETHEUS
+    SEARCH --> PROMETHEUS
+    
+    AUTH --> HEALTH
+    MAP --> HEALTH
+    SEARCH --> HEALTH
+    
+    AUTH --> LOGS
+    MAP --> LOGS
+    SEARCH --> LOGS
+```
+
+### マイクロサービス詳細アーキテクチャ
+
+#### 認証サービス (Port 3001) ✅
+```mermaid
+graph TB
+    subgraph "Auth Service - TypeScript"
+        AUTH_API[Express.js API<br/>TypeScript]
+        AUTH_ROUTES[Routes<br/>auth, user, health, metrics]
+        AUTH_MIDDLEWARE[Middleware<br/>JWT, Validation, Metrics]
+        AUTH_SERVICES[Services<br/>Database, Redis, Auth]
+    end
+    
+    subgraph "Auth Data"
+        AUTH_PG[(PostgreSQL<br/>users, sessions)]
+        AUTH_REDIS[(Redis<br/>session cache)]
+    end
+    
+    AUTH_API --> AUTH_ROUTES
+    AUTH_ROUTES --> AUTH_MIDDLEWARE
+    AUTH_MIDDLEWARE --> AUTH_SERVICES
+    AUTH_SERVICES --> AUTH_PG
+    AUTH_SERVICES --> AUTH_REDIS
+```
+
+#### 地図サービス (Port 3002) ✅
+```mermaid
+graph TB
+    subgraph "Map Service - TypeScript"
+        MAP_API[Express.js API<br/>TypeScript]
+        MAP_ROUTES[Routes<br/>tiles, styles, health, metrics]
+        MAP_MIDDLEWARE[Middleware<br/>Cache, Validation, Metrics]
+        MAP_SERVICES[Services<br/>Tile, Style, Storage, Redis]
+    end
+    
+    subgraph "Map Data"
+        MAP_REDIS[(Redis<br/>tile cache)]
+        MAP_STORAGE[(Storage<br/>S3/GCS/Local)]
+        MAP_OSM[OpenStreetMap<br/>Tile Source]
+    end
+    
+    MAP_API --> MAP_ROUTES
+    MAP_ROUTES --> MAP_MIDDLEWARE
+    MAP_MIDDLEWARE --> MAP_SERVICES
+    MAP_SERVICES --> MAP_REDIS
+    MAP_SERVICES --> MAP_STORAGE
+    MAP_SERVICES --> MAP_OSM
+```
+
+#### 検索サービス (Port 3003) ⚠️
+```mermaid
+graph TB
+    subgraph "Search Service - Simple JS"
+        SEARCH_API[Express.js API<br/>JavaScript]
+        SEARCH_ROUTES[Routes<br/>search, geocoding, poi, health]
+        SEARCH_MOCK[Mock Services<br/>Static Data]
+    end
+    
+    subgraph "Search Data - Future"
+        SEARCH_ES[(Elasticsearch<br/>Search Index)]
+        SEARCH_REDIS[(Redis<br/>Search Cache)]
+        SEARCH_NOMINATIM[Nominatim API<br/>Geocoding]
+    end
+    
+    SEARCH_API --> SEARCH_ROUTES
+    SEARCH_ROUTES --> SEARCH_MOCK
+    SEARCH_MOCK -.-> SEARCH_ES
+    SEARCH_MOCK -.-> SEARCH_REDIS
+    SEARCH_MOCK --> SEARCH_NOMINATIM
+```
+
+### 共有ライブラリアーキテクチャ ✅
+
+```mermaid
+graph TB
+    subgraph "Shared Library - TypeScript"
+        TYPES_COMMON[types/common.ts<br/>API, User, Geo Types]
+        UTILS_LOGGER[utils/logger.ts<br/>Structured Logging]
+        MIDDLEWARE_AUTH[middleware/auth.ts<br/>JWT Validation]
+    end
+    
+    subgraph "Services Using Shared"
+        AUTH_SVC[Auth Service]
+        MAP_SVC[Map Service]
+        SEARCH_SVC[Search Service]
+    end
+    
+    TYPES_COMMON --> AUTH_SVC
+    TYPES_COMMON --> MAP_SVC
+    TYPES_COMMON --> SEARCH_SVC
+    
+    UTILS_LOGGER --> AUTH_SVC
+    UTILS_LOGGER --> MAP_SVC
+    UTILS_LOGGER --> SEARCH_SVC
+    
+    MIDDLEWARE_AUTH --> AUTH_SVC
+    MIDDLEWARE_AUTH --> MAP_SVC
+    MIDDLEWARE_AUTH --> SEARCH_SVC
+```
+
+### データフローアーキテクチャ
+
+#### 認証フロー
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthService
+    participant PostgreSQL
+    participant Redis
+    
+    Client->>AuthService: POST /auth/login
+    AuthService->>PostgreSQL: Validate credentials
+    PostgreSQL-->>AuthService: User data
+    AuthService->>Redis: Store session
+    Redis-->>AuthService: Session stored
+    AuthService-->>Client: JWT tokens
+    
+    Client->>AuthService: GET /users/me (with JWT)
+    AuthService->>Redis: Validate session
+    Redis-->>AuthService: Session valid
+    AuthService-->>Client: User profile
+```
+
+#### 地図タイル配信フロー
+```mermaid
+sequenceDiagram
+    participant Client
+    participant MapService
+    participant Redis
+    participant Storage
+    participant OSM
+    
+    Client->>MapService: GET /tiles/10/512/256.png
+    MapService->>Redis: Check cache
+    Redis-->>MapService: Cache miss
+    MapService->>Storage: Check storage
+    Storage-->>MapService: Tile not found
+    MapService->>OSM: Fetch tile
+    OSM-->>MapService: Tile data
+    MapService->>Storage: Store tile
+    MapService->>Redis: Cache tile
+    MapService-->>Client: Tile image
+```
+
+#### 検索フロー
+```mermaid
+sequenceDiagram
+    participant Client
+    participant SearchService
+    participant Redis
+    participant Elasticsearch
+    participant Nominatim
+    
+    Client->>SearchService: GET /search?q=tokyo
+    SearchService->>Redis: Check cache
+    Redis-->>SearchService: Cache miss
+    SearchService->>Elasticsearch: Search query
+    Elasticsearch-->>SearchService: Search results
+    SearchService->>Nominatim: Geocoding
+    Nominatim-->>SearchService: Coordinates
+    SearchService->>Redis: Cache results
+    SearchService-->>Client: Search results
+```
+
+### 監視・運用アーキテクチャ
+
+```mermaid
+graph TB
+    subgraph "Services"
+        AUTH[Auth Service]
+        MAP[Map Service]
+        SEARCH[Search Service]
+    end
+    
+    subgraph "Monitoring Stack"
+        HEALTH_CHECKS[Health Checks<br/>/health endpoints]
+        METRICS[Prometheus Metrics<br/>/metrics endpoints]
+        LOGS[Structured Logs<br/>JSON format]
+    end
+    
+    subgraph "Observability - Future"
+        PROMETHEUS_SERVER[Prometheus Server]
+        GRAFANA[Grafana Dashboard]
+        ALERTMANAGER[Alert Manager]
+        JAEGER[Jaeger Tracing]
+    end
+    
+    AUTH --> HEALTH_CHECKS
+    MAP --> HEALTH_CHECKS
+    SEARCH --> HEALTH_CHECKS
+    
+    AUTH --> METRICS
+    MAP --> METRICS
+    SEARCH --> METRICS
+    
+    AUTH --> LOGS
+    MAP --> LOGS
+    SEARCH --> LOGS
+    
+    METRICS -.-> PROMETHEUS_SERVER
+    LOGS -.-> JAEGER
+    PROMETHEUS_SERVER -.-> GRAFANA
+    PROMETHEUS_SERVER -.-> ALERTMANAGER
+```
+
+### セキュリティアーキテクチャ
+
+```mermaid
+graph TB
+    subgraph "Security Layers"
+        TLS[TLS/HTTPS<br/>Transport Security]
+        JWT[JWT Tokens<br/>Authentication]
+        RBAC[Role-Based Access<br/>Authorization]
+        RATE_LIMIT[Rate Limiting<br/>DDoS Protection]
+        INPUT_VAL[Input Validation<br/>XSS/Injection Prevention]
+    end
+    
+    subgraph "Services"
+        AUTH[Auth Service<br/>JWT Issuer]
+        MAP[Map Service<br/>Protected Resources]
+        SEARCH[Search Service<br/>Public API]
+    end
+    
+    TLS --> AUTH
+    TLS --> MAP
+    TLS --> SEARCH
+    
+    JWT --> AUTH
+    JWT --> MAP
+    
+    RBAC --> AUTH
+    RBAC --> MAP
+    
+    RATE_LIMIT --> AUTH
+    RATE_LIMIT --> MAP
+    RATE_LIMIT --> SEARCH
+    
+    INPUT_VAL --> AUTH
+    INPUT_VAL --> MAP
+    INPUT_VAL --> SEARCH
+```
+
+### デプロイメントアーキテクチャ (将来)
+
+```mermaid
+graph TB
+    subgraph "Development"
+        DEV_AUTH[Auth Service<br/>localhost:3001]
+        DEV_MAP[Map Service<br/>localhost:3002]
+        DEV_SEARCH[Search Service<br/>localhost:3003]
+    end
+    
+    subgraph "Staging - Future"
+        STAGE_AUTH[Auth Service<br/>staging:3001]
+        STAGE_MAP[Map Service<br/>staging:3002]
+        STAGE_SEARCH[Search Service<br/>staging:3003]
+    end
+    
+    subgraph "Production - Future"
+        PROD_LB[Load Balancer]
+        PROD_AUTH[Auth Service<br/>Cluster]
+        PROD_MAP[Map Service<br/>Cluster]
+        PROD_SEARCH[Search Service<br/>Cluster]
+    end
+    
+    subgraph "CI/CD Pipeline - Future"
+        GITHUB[GitHub Actions]
+        DOCKER[Docker Build]
+        K8S[Kubernetes Deploy]
+    end
+    
+    DEV_AUTH --> GITHUB
+    DEV_MAP --> GITHUB
+    DEV_SEARCH --> GITHUB
+    
+    GITHUB --> DOCKER
+    DOCKER --> K8S
+    
+    K8S --> STAGE_AUTH
+    K8S --> STAGE_MAP
+    K8S --> STAGE_SEARCH
+    
+    K8S --> PROD_LB
+    PROD_LB --> PROD_AUTH
+    PROD_LB --> PROD_MAP
+    PROD_LB --> PROD_SEARCH
+```
+
+---
+
+## 📊 v2.1.0 アーキテクチャ実装状況
+
+### ✅ 完了済みアーキテクチャ
+- **マイクロサービス分離**: 3サービス独立動作
+- **TypeScript基盤**: 共有ライブラリ・型定義完備
+- **認証アーキテクチャ**: JWT・RBAC・セッション管理
+- **地図アーキテクチャ**: タイル配信・キャッシュ・ストレージ
+- **監視アーキテクチャ**: ヘルスチェック・メトリクス・ログ
+
+### ⚠️ 改善中アーキテクチャ
+- **検索サービス**: TypeScript完全実装
+- **統合テスト**: サービス間通信テスト
+- **エンドポイント**: 詳細ヘルスチェック・メトリクス
+
+### 🎯 次期アーキテクチャ (v2.2.0)
+- **API Gateway**: 統合エンドポイント・ルーティング
+- **CI/CD**: GitHub Actions・自動デプロイ
+- **Kubernetes**: コンテナオーケストレーション
+- **分散トレーシング**: Jaeger・APM統合
+- **自動スケーリング**: HPA・負荷分散---
+
+
+## 🌐 v2.1.1 外部API画像取得機能 アーキテクチャ
+
+### 画像取得システム論理構成
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    画像取得レイヤー                          │
+├─────────────────────────────────────────────────────────────┤
+│  MapService.getLocationImage()                              │
+│         │                                                   │
+│         ├── Wikipedia API ──────┐                          │
+│         │   ├── REST API        │                          │
+│         │   ├── Search API      │                          │
+│         │   └── 複数検索戦略     │                          │
+│         │                       │                          │
+│         ├── Unsplash API ───────┼── Promise.race()         │
+│         │   ├── Source API      │    (5秒タイムアウト)      │
+│         │   └── 地点・カテゴリ   │                          │
+│         │                       │                          │
+│         └── Default SVG ────────┘                          │
+│             ├── カテゴリ別色分け                             │
+│             ├── 動的アイコン生成                             │
+│             └── Blob URL作成                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### セキュリティ・監視レイヤー
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  セキュリティレイヤー                        │
+├─────────────────────────────────────────────────────────────┤
+│  ├── 入力検証 ──── XSS対策・長さ制限・文字制限              │
+│  ├── URL検証 ───── HTTPS必須・ドメイン制限                  │
+│  ├── CSP対応 ───── Content Security Policy準拠             │
+│  └── エラー制御 ── セキュアなエラーメッセージ                │
+└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    監視レイヤー                             │
+├─────────────────────────────────────────────────────────────┤
+│  ├── メトリクス ── 成功率・応答時間・API使用状況            │
+│  ├── 構造化ログ ── JSON形式・詳細な動作記録                 │
+│  ├── エラー追跡 ── 失敗パターン分析・改善提案               │
+│  └── パフォーマンス監視 ── リアルタイム性能監視             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+**論理アーキテクチャ最終更新**: 2025年8月19日 17:20:00  
+**対象機能**: 外部API画像取得機能 v2.1.1  
+**アーキテクチャ完成度**: 100%

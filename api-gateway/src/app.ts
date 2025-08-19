@@ -21,6 +21,7 @@ import { searchRoutes } from './routes/search';
 import { routingRoutes } from './routes/routing';
 import { userRoutes } from './routes/user';
 import { metricsRoutes } from './routes/metrics';
+import transitRoutes from './routes/transit';
 
 // Import middleware
 import { collectMetrics } from './middleware/metrics';
@@ -108,6 +109,7 @@ app.use('/api/v2/auth', authRoutes);
 app.use('/api/v2/maps', validateApiKey, mapsRoutes);
 app.use('/api/v2/search', validateApiKey, searchRoutes);
 app.use('/api/v2/routing', validateApiKey, routingRoutes);
+app.use('/api/v2/transit', validateApiKey, transitRoutes);
 
 // User routes (require JWT token, not API key)
 app.use('/api/v2/user', userRoutes);

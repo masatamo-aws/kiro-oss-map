@@ -17,6 +17,7 @@ import { UIAnimationService } from './services/UIAnimationService.js';
 import { I18nService } from './services/I18nService.js';
 import { PerformanceService } from './services/PerformanceService.js';
 import { WorkerManager } from './services/WorkerManager.js';
+import { getPublicTransitService } from './services/PublicTransitService.js';
 
 // v1.3.0 New Services
 import ImageOptimizationService from './services/ImageOptimizationService.js';
@@ -33,6 +34,7 @@ import './components/LoadingSpinner.js';
 import './components/ProgressBar.js';
 import './components/LanguageSwitcher.js';
 import './components/VirtualScrollList.js';
+import './components/TransitPanel.js';
 
 class App {
   constructor() {
@@ -99,6 +101,9 @@ class App {
       
       // v1.3.0 New services
       this.services.imageOptimization = ImageOptimizationService;
+      
+      // v2.1.0 Public Transit Service
+      this.services.publicTransit = getPublicTransitService();
 
       // Apply saved theme early
       this.services.theme.initialize();
@@ -185,6 +190,9 @@ class App {
     
     // Initialize share functionality
     this.initializeShareFunctionality();
+    
+    // Initialize transit functionality
+    this.initializeTransitFunctionality();
     
     // Initialize UI components
     this.initializeUIComponents();
@@ -731,6 +739,19 @@ class App {
   initializeMeasurementPanel() {
     // Measurement panel initialization
     Logger.debug('Measurement panel initialized');
+  }
+
+  initializeTransitFunctionality() {
+    // Initialize transit button
+    const transitBtn = document.getElementById('transit-btn');
+    if (transitBtn) {
+      transitBtn.addEventListener('click', () => {
+        const transitPanel = document.querySelector('transit-panel');
+        if (transitPanel) {
+          transitPanel.toggle();
+        }
+      });
+    }
   }
 
   initializeShareFunctionality() {
