@@ -1,4 +1,4 @@
-# 🗺️ Kiro OSS Map
+﻿# 🗺️ Kiro OSS Map
 
 **バージョン**: 2.1.1 + 外部API画像機能  
 **リリース日**: 2025年8月19日  
@@ -29,30 +29,31 @@
 - **プライバシー重視**: 最小限の個人情報収集
 - **カスタマイズ可能**: 自前ホスティング対応
 
-## � スクリーンショット
+## 📸 スクリーンショット
 
-### 🗺️ 標準地図表示
-OpenStreetMapベースの詳細な地図表示。検索機能、現在地表示、レスポンシブデザインを搭載。
+### 🔍 地図検索機能
+OpenStreetMapベースの高速検索機能。リアルタイム検索候補表示、検索履歴管理、詳細な地点情報を提供。
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/masatamo-aws/kiro-oss-map/main/assets/image/Standard%20Map.png" alt="Kiro OSS Map - 標準地図表示" width="800">
-  <p><em>標準地図モード - 目黒駅周辺の表示例</em></p>
+  <img src="https://raw.githubusercontent.com/masatamo-aws/kiro-oss-map/main/assets/image/Map_Search.png" alt="Kiro OSS Map - 地図検索機能" width="800">
+  <p><em>地図検索画面 - リアルタイム検索とオートコンプリート機能</em></p>
 </div>
 
-### 🛰️ 衛星画像表示
-航空写真による詳細な地形表示。建物や道路の実際の様子を確認できます。
+### 🛣️ ルート検索機能
+複数経由地対応のルート検索機能。車・徒歩・自転車の交通手段選択、ターンバイターン詳細案内を搭載。
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/masatamo-aws/kiro-oss-map/main/assets/image/Satelite%20Map.png" alt="Kiro OSS Map - 衛星画像表示" width="800">
-  <p><em>衛星画像モード - 高解像度航空写真による地形表示</em></p>
+  <img src="https://raw.githubusercontent.com/masatamo-aws/kiro-oss-map/main/assets/image/Map_Route_Search.png" alt="Kiro OSS Map - ルート検索機能" width="800">
+  <p><em>ルート検索画面 - 複数経由地対応・詳細案内機能</em></p>
 </div>
 
 ### ✨ 主な表示機能
-- **🔍 リアルタイム検索**: 入力と同時に候補を表示
-- **📍 詳細ピン情報**: 地点クリックで詳細情報とアクション
-- **🛣️ ルート表示**: 最適経路の可視化と案内
+- **🔍 高速検索**: Nominatim API統合による高精度検索
+- **🗺️ 複数経由地ルート**: 最大5点の経由地対応
+- **🖼️ 詳細地点情報**: Wikipedia・Unsplash画像自動取得
+- **🛣️ ターンバイターン案内**: 詳細なルート案内
 - **🌙 ダークモード**: 目に優しい夜間表示
-- **📱 モバイル最適化**: タッチ操作とレスポンシブレイアウト
+- **📱 レスポンシブ**: モバイル・タブレット完全対応
 
 ## 📚 ドキュメント
 
@@ -1815,16 +1816,24 @@ curl http://localhost:3001/metrics
 - [設計書](docs/design.md) - システム設計・アーキテクチャ
 - [技術仕様書](docs/specifications.md) - 詳細技術仕様
 - [論理アーキテクチャ](docs/logicalarchitecture.md) - システム構成
+- [タスク管理](docs/tasks.md) - 開発タスク・進捗状況
 
 ### 運用文書
 - [構築手順書](docs/構築手順書.md) - セットアップ・デプロイ手順
-- [本番運用ガイド](api-gateway/PRODUCTION-GUIDE.md) - 本番環境運用
-- [実装レポート](api-gateway/IMPLEMENTATION-REPORT-v2.0.0.md) - 実装完了報告
+- [本番運用ガイド](docs/api-gateway-PRODUCTION-GUIDE.md) - 本番環境運用
+- [実装レポート](docs/api-gateway-IMPLEMENTATION-REPORT-v2.0.0.md) - 実装完了報告
+- [変更履歴](docs/CHANGELOG.md) - バージョン履歴
 
-### テスト文書
+### テスト・品質文書
 - [テストシナリオ](docs/testscenario.md) - 包括的テストケース
 - [テスト結果](docs/testresult.md) - 最新テスト実行結果
-- [API Gateway テスト結果](api-gateway/test-results-v2.0.0-final.md) - API詳細テスト
+- [ルート検索テストガイド](docs/ROUTE-SEARCH-TEST-GUIDE.md) - ルート検索機能テスト
+
+### プロジェクト完了レポート
+- [Perfect Quality Achievement Report](docs/PERFECT-QUALITY-ACHIEVEMENT-REPORT-v2.2.3.md) - 完璧品質達成レポート
+- [Project Status](docs/PROJECT-STATUS.md) - プロジェクト完了状況
+- [Project Cleanup Report](docs/PROJECT-CLEANUP-REPORT-v2.2.3.md) - プロジェクトクリーンアップ報告
+- [Release Notes](docs/RELEASE-NOTES.md) - 統合リリースノート0-final.md) - API詳細テスト
 
 ---
 

@@ -7,6 +7,23 @@ import { asyncHandler, ValidationError, NotFoundError } from '../middleware/erro
 import { requirePermission } from '../middleware/auth';
 import { logger } from '../utils/logger';
 
+// エラー処理ミドルウェア
+const handleAsyncError = (fn: Function) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+};
+
+// 共通エラーレスポンス
+const sendErrorResponse = (res: Response, statusCode: number, message: string, details?: any) => {
+  res.status(statusCode).json({
+    success: false,
+    error: message,
+    details,
+    timestamp: new Date().toISOString()
+  });
+};
+
 const router = Router();
 
 // Get user bookmarks

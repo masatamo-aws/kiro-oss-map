@@ -3,163 +3,942 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiro OSS Map - オープンソース地図アプリ</title>
-    <meta name="description" content="OpenStreetMapを使用したオープンソース地図アプリケーション">
-    <meta name="keywords" content="地図,OpenStreetMap,ナビゲーション,経路探索">
-    
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#3b82f6">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Kiro OSS Map">
+    <meta name="theme-color" content="#2196F3">
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
-    <link rel="apple-touch-icon" href="/icons/logo.svg">
+    <title>Kiro OSS Map</title>
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin=""/>
     
-    <!-- MapLibre GL CSS -->
-    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Ensure MapLibre GL JS loads before our scripts -->
-    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <!-- QR Code Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     
-    <!-- Styles -->
-    <link rel="stylesheet" href="./styles/main.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+        
+        #app {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+        
+        /* Search Box */
+        .search-container {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            z-index: 1000;
+            width: 300px;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            background: white;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box:focus {
+            box-shadow: 0 4px 25px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+        
+        /* Map Container */
+        #map {
+            flex: 1;
+            position: relative;
+        }
+        
+        /* Map Controls */
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            background: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            color: #333;
+        }
+        
+        .control-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        
+        /* Loading */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .loading.hidden {
+            display: none;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .search-container {
+                width: calc(100% - 40px);
+                left: 20px;
+                right: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            
+            .header-controls {
+                gap: 5px;
+            }
+            
+            .btn {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+        }
+        
+        /* Panels */
+        .panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 20px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 2000;
+            overflow-y: auto;
+        }
+        
+        .panel.open {
+            right: 0;
+        }
+        
+        .panel-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .panel-content {
+            padding: 20px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+        
+        /* Dark Theme */
+        body.dark-theme {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        body.dark-theme .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        }
+        
+        body.dark-theme .search-box {
+            background: #2c3e50;
+            color: white;
+            border: 1px solid #34495e;
+        }
+        
+        body.dark-theme .search-box::placeholder {
+            color: #bdc3c7;
+        }
+        
+        body.dark-theme .control-btn {
+            background: #2c3e50;
+            color: white;
+            border: 1px solid #34495e;
+        }
+        
+        body.dark-theme .control-btn:hover {
+            background: #34495e;
+        }
+        
+        body.dark-theme .panel {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        body.dark-theme .panel-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        }
+        
+        body.dark-theme .panel-content {
+            background: #2c3e50;
+        }
+        
+        /* Leaflet dark theme adjustments */
+        body.dark-theme .leaflet-control-container .leaflet-control {
+            background: #2c3e50;
+            border: 1px solid #34495e;
+        }
+        
+        body.dark-theme .leaflet-control-container .leaflet-control a {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        body.dark-theme .leaflet-control-container .leaflet-control a:hover {
+            background: #34495e;
+        }
+        
+        body.dark-theme .leaflet-popup-content-wrapper {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        body.dark-theme .leaflet-popup-tip {
+            background: #2c3e50;
+        }
+        
+        /* Route Panel Styles */
+        .route-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 350px;
+            max-height: 80vh;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+        
+        .route-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .route-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        
+        .route-close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+        
+        .route-close-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .route-content {
+            padding: 20px;
+            max-height: calc(80vh - 60px);
+            overflow-y: auto;
+        }
+        
+        /* 交通手段選択 */
+        .transport-mode-selector {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .transport-mode-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .transport-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .transport-btn {
+            flex: 1;
+            padding: 10px 8px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .transport-btn:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+        
+        .transport-btn.active {
+            border-color: #007bff;
+            background: #007bff;
+            color: white;
+        }
+        
+        /* ルートポイント */
+        .route-points {
+            margin-bottom: 15px;
+        }
+        
+        .no-points-message {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .route-point {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            transition: all 0.3s ease;
+        }
+        
+        .route-point:hover {
+            background: #e9ecef;
+        }
+        
+        .route-point.start {
+            border-left-color: #28a745;
+        }
+        
+        .route-point.waypoint {
+            border-left-color: #ffc107;
+        }
+        
+        .route-point.end {
+            border-left-color: #dc3545;
+        }
+        
+        .point-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-right: 12px;
+            background: #007bff;
+        }
+        
+        .route-point.start .point-icon {
+            background: #28a745;
+        }
+        
+        .route-point.waypoint .point-icon {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .route-point.end .point-icon {
+            background: #dc3545;
+        }
+        
+        .point-info {
+            flex: 1;
+        }
+        
+        .point-label {
+            font-weight: 600;
+            margin-bottom: 2px;
+            color: #333;
+        }
+        
+        .point-coords {
+            font-size: 0.85em;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .remove-point-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+        
+        .remove-point-btn:hover {
+            background: #c82333;
+        }
+        
+        /* 経由地追加ボタン */
+        .add-waypoint-btn {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #007bff;
+            background: transparent;
+            color: #007bff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .add-waypoint-btn:hover {
+            background: #007bff;
+            color: white;
+        }
+        
+        /* ルート検索実行セクション */
+        .route-search-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .route-search-btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+        }
+        
+        .route-search-btn:hover {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.3);
+        }
+        
+        .route-search-btn:active {
+            transform: translateY(0);
+        }
+        
+        .route-search-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.6;
+        }
+        
+        .route-options {
+            display: flex;
+            align-items: center;
+            font-size: 0.9em;
+        }
+        
+        .route-options label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .route-options input[type="checkbox"] {
+            margin-right: 8px;
+            transform: scale(1.1);
+        }
+        
+        /* ルート情報表示 */
+        .route-summary {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .route-mode {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+            text-align: center;
+        }
+        
+        .route-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .route-stat {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .route-label {
+            display: block;
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        
+        .route-value {
+            display: block;
+            font-weight: 600;
+            color: #007bff;
+            font-size: 1.1em;
+        }
+        
+        /* ルートアクション */
+        .route-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .route-btn {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .route-btn.clear {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .route-btn.clear:hover {
+            background: #c82333;
+        }
+        
+        .route-btn.instructions {
+            background: #007bff;
+            color: white;
+        }
+        
+        .route-btn.instructions:hover {
+            background: #0056b3;
+        }
+        
+        /* ルート案内 */
+        .route-instructions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .route-instructions h4 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 1.1em;
+        }
+        
+        .instructions-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .instruction-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .instruction-item:last-child {
+            border-bottom: none;
+        }
+        
+        .instruction-distance {
+            color: #007bff;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        /* ダークテーマ対応 */
+        body.dark-theme .route-panel {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        body.dark-theme .transport-mode-selector {
+            background: #34495e;
+        }
+        
+        body.dark-theme .transport-mode-selector label {
+            color: white;
+        }
+        
+        body.dark-theme .transport-btn {
+            background: #34495e;
+            border-color: #4a5f7a;
+            color: white;
+        }
+        
+        body.dark-theme .transport-btn:hover {
+            border-color: #007bff;
+            background: #4a5f7a;
+        }
+        
+        body.dark-theme .route-point {
+            background: #34495e;
+        }
+        
+        body.dark-theme .point-label {
+            color: white;
+        }
+        
+        body.dark-theme .point-coords {
+            color: #bdc3c7;
+        }
+        
+        body.dark-theme .route-search-section {
+            background: #34495e;
+        }
+        
+        body.dark-theme .route-summary {
+            background: #34495e;
+        }
+        
+        body.dark-theme .route-mode {
+            color: white;
+        }
+        
+        body.dark-theme .route-stat {
+            background: #2c3e50;
+        }
+        
+        body.dark-theme .route-instructions {
+            background: #34495e;
+        }
+        
+        body.dark-theme .route-instructions h4 {
+            color: white;
+        }
+        
+        body.dark-theme .no-points-message {
+            background: #34495e;
+            color: #bdc3c7;
+        }
+        
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .route-panel {
+                left: 10px;
+                right: 10px;
+                width: auto;
+                bottom: 10px;
+            }
+            
+            .transport-buttons {
+                flex-direction: column;
+                gap: 6px;
+            }
+            
+            .route-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
-        <div class="text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-            <p class="text-gray-600 dark:text-gray-300">地図を読み込み中...</p>
+<body>
+    <div id="app">
+        <!-- Loading Screen -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <span>地図を読み込み中...</span>
+        </div>
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>🗺️ Kiro OSS Map</h1>
+            <div class="header-controls">
+                <button class="btn" id="themeBtn">🌙 ダーク</button>
+                <button class="btn" id="langBtn">🌐 EN</button>
+                <button class="btn" id="shareBtn">📤 共有</button>
+                <button class="btn" id="bookmarkBtn">📚 ブックマーク</button>
+            </div>
+        </div>
+        
+        <!-- Search Container -->
+        <div class="search-container">
+            <input type="text" class="search-box" id="searchBox" placeholder="場所を検索...">
+        </div>
+        
+        <!-- Map -->
+        <div id="map"></div>
+        
+        <!-- Map Controls -->
+        <div class="map-controls">
+            <button class="control-btn" id="currentLocationBtn" title="現在地">
+                <i class="fas fa-location-arrow"></i>
+            </button>
+            <button class="control-btn" id="routeBtn" title="ルート検索">
+                <i class="fas fa-route"></i>
+            </button>
+            <button class="control-btn" id="measureBtn" title="距離測定">
+                <i class="fas fa-ruler"></i>
+            </button>
+        </div>
+        
+        <!-- Bookmark Panel -->
+        <div class="panel" id="bookmarkPanel">
+            <div class="panel-header">
+                <h2>📚 ブックマーク</h2>
+                <button class="close-btn" onclick="closePanel('bookmarkPanel')">&times;</button>
+            </div>
+            <div class="panel-content" id="bookmarkContent">
+                <p>ブックマークはありません</p>
+            </div>
+        </div>
+        
+        <!-- Share Panel -->
+        <div class="panel" id="sharePanel">
+            <div class="panel-header">
+                <h2>📤 地図を共有</h2>
+                <button class="close-btn" onclick="closePanel('sharePanel')">&times;</button>
+            </div>
+            <div class="panel-content" id="shareContent">
+                <p>共有機能を準備中...</p>
+            </div>
+        </div>
+        
+        <!-- Route Panel -->
+        <div class="route-panel" id="routePanel">
+            <div class="route-header">
+                <h3>🗺️ ルート検索</h3>
+                <button class="route-close-btn" onclick="closeRoutePanel()">&times;</button>
+            </div>
+            <div class="route-content">
+                <!-- 交通手段選択 -->
+                <div class="transport-mode-selector">
+                    <label>交通手段を選択:</label>
+                    <div class="transport-buttons">
+                        <button class="transport-btn active" data-mode="driving-car">🚗 車</button>
+                        <button class="transport-btn" data-mode="foot-walking">🚶 徒歩</button>
+                        <button class="transport-btn" data-mode="cycling-regular">🚴 自転車</button>
+                    </div>
+                </div>
+                
+                <!-- ルートポイント一覧 -->
+                <div class="route-points" id="routePointsList">
+                    <p class="no-points-message">地図をクリックしてルートポイントを追加してください</p>
+                </div>
+                
+                <!-- 経由地追加ボタン -->
+                <button class="add-waypoint-btn" id="addWaypointBtn" onclick="enableWaypointMode()">
+                    ➕ 経由地を追加
+                </button>
+                
+                <!-- ルート検索実行セクション -->
+                <div class="route-search-section">
+                    <button class="route-search-btn" id="executeRouteBtn" onclick="executeRouteSearch()">
+                        🔍 ルート検索実行
+                    </button>
+                    <div class="route-options">
+                        <label>
+                            <input type="checkbox" id="autoRouteSearch" onchange="toggleAutoRouteSearch()">
+                            自動ルート検索
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- ルート情報表示 -->
+                <div class="route-summary" id="routeSummary" style="display: none;">
+                    <div class="route-mode" id="routeModeDisplay">🚗 車でのルート</div>
+                    <div class="route-stats">
+                        <div class="route-stat">
+                            <span class="route-label">距離</span>
+                            <span class="route-value" id="routeDistance">-</span>
+                        </div>
+                        <div class="route-stat">
+                            <span class="route-label">所要時間</span>
+                            <span class="route-value" id="routeDuration">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ルートアクション -->
+                <div class="route-actions" id="routeActions" style="display: none;">
+                    <button class="route-btn clear" onclick="clearRoute()">ルートをクリア</button>
+                    <button class="route-btn instructions" onclick="showRouteInstructions()">詳細案内</button>
+                </div>
+                
+                <!-- ルート案内 -->
+                <div class="route-instructions" id="routeInstructions" style="display: none;">
+                    <h4>ルート案内</h4>
+                    <div class="instructions-list" id="instructionsList"></div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <!-- Main App Container -->
-    <div id="app" class="h-screen flex flex-col">
-        <!-- Header -->
-        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 z-ui">
-            <div class="flex items-center justify-between px-4 py-3">
-                <!-- Logo -->
-                <div class="flex items-center space-x-3">
-                    <img src="/icons/logo.svg" alt="Kiro OSS Map" class="h-8 w-8">
-                    <div class="flex items-baseline space-x-2">
-                        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Kiro OSS Map</h1>
-                        <span id="app-version" class="text-xs text-gray-500 dark:text-gray-400 font-medium">v1.0.0</span>
-                    </div>
-                </div>
-                
-                <!-- Search Box -->
-                <div class="flex-1 max-w-md mx-4">
-                    <search-box></search-box>
-                </div>
-                
-                <!-- Controls -->
-                <div class="flex items-center space-x-2">
-                    <language-switcher></language-switcher>
-                    <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" data-i18n="settings.theme" title="テーマ切替">
-                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                        </svg>
-                    </button>
-                    <button id="menu-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 md:hidden" data-i18n="a11y.menu" title="メニュー">
-                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="flex-1 relative">
-            <!-- Sidebar -->
-            <aside id="sidebar" class="absolute left-0 top-0 h-full w-80 bg-white dark:bg-gray-800 shadow-lg z-ui transform -translate-x-full md:translate-x-0 transition-transform duration-300 glass optimized-element" data-animate="slideInFromLeft">
-                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white" data-i18n="search.results">検索結果</h2>
-                </div>
-                <div id="search-results" class="p-4 overflow-y-auto h-full optimized-scroll" data-virtual-scroll="true" data-item-template="search-result">
-                    <p class="text-gray-500 dark:text-gray-400 text-center" data-animate="fadeInUp" data-i18n="search.placeholder">場所を検索してください</p>
-                </div>
-            </aside>
-
-            <!-- Map Container -->
-            <div id="map-container" class="h-full md:ml-80">
-                <div id="map" class="w-full h-full"></div>
-                
-                <!-- Map Controls -->
-                <div class="map-controls absolute top-4 right-4 space-y-2 z-ui gpu-accelerated" data-animate="slideInFromRight">
-                    <!-- Location Button -->
-                    <button id="location-btn" class="control-btn bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover-lift ripple tooltip" data-i18n="map.currentLocation" title="現在地を表示" data-tooltip="現在地を表示">
-                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                    </button>
-                    
-                    <!-- Route Button -->
-                    <button id="route-btn" class="control-btn bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover-lift ripple tooltip" title="ルート検索" data-tooltip="ルート検索">
-                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-                        </svg>
-                    </button>
-                    
-                    <!-- Measurement Button -->
-                    <button id="measurement-btn" class="control-btn bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover-lift ripple tooltip" title="計測ツール" data-tooltip="計測ツール">
-                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM7 3H5a2 2 0 00-2 2v12a4 4 0 004 4h2a2 2 0 002-2V5a2 2 0 00-2-2z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2-2-2M21 12H9"></path>
-                        </svg>
-                    </button>
-                    
-                    <!-- Transit Button -->
-                    <button id="transit-btn" class="control-btn bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover-lift ripple tooltip" title="公共交通" data-tooltip="公共交通">
-                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-                        </svg>
-                    </button>
-                    
-                    <!-- Share Button -->
-                    <button id="share-btn" class="control-btn bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover-lift ripple tooltip" title="地図を共有" data-tooltip="地図を共有">
-                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
-                        </svg>
-                    </button>
-                    
-                    <!-- Layer Control -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-                        <button id="layer-standard" class="block w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 bg-primary-50 dark:bg-primary-800">
-                            標準地図
-                        </button>
-                        <button id="layer-satellite" class="block w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                            衛星画像
-                        </button>
-                        <button id="layer-terrain" class="block w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                            地形図
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Route Panel -->
-                <route-panel></route-panel>
-                
-                <!-- Transit Panel -->
-                <transit-panel></transit-panel>
-                
-                <!-- Measurement Panel -->
-                <measurement-panel></measurement-panel>
-            </div>
-        </main>
-    </div>
-
-    <!-- Share Dialog -->
-    <share-dialog></share-dialog>
-
-    <!-- Scripts -->
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin=""></script>
+    
+    <!-- Main Application Script -->
     <script type="module" src="./main.js"></script>
 </body>
 </html>

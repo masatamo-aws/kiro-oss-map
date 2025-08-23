@@ -1,0 +1,92 @@
+{
+  "app": {
+    "title": "Kiro OSS Map",
+    "description": "Open Source Map Application"
+  },
+  "nav": {
+    "search": "Search",
+    "bookmarks": "Bookmarks",
+    "settings": "Settings",
+    "help": "Help"
+  },
+  "search": {
+    "placeholder": "Search for places...",
+    "results": "Search Results",
+    "no_results": "No results found",
+    "searching": "Searching...",
+    "clear": "Clear"
+  },
+  "map": {
+    "currentLocation": "Current Location",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "fullscreen": "Fullscreen",
+    "layers": "Layers"
+  },
+  "bookmarks": {
+    "title": "Bookmarks",
+    "add": "Add Bookmark",
+    "edit": "Edit",
+    "delete": "Delete",
+    "category": "Category",
+    "name": "Name",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "language": "Language",
+    "units": "Units",
+    "privacy": "Privacy"
+  },
+  "a11y": {
+    "menu": "Menu",
+    "close": "Close",
+    "open": "Open",
+    "loading": "Loading"
+  },
+  "transit": {
+    "title": "Public Transit",
+    "from": "From",
+    "to": "To",
+    "depart_at": "Depart at",
+    "arrive_by": "Arrive by",
+    "now": "Now",
+    "optimize": "Optimize for",
+    "optimize_time": "Fastest Route",
+    "optimize_transfers": "Fewest Transfers",
+    "optimize_cost": "Lowest Cost",
+    "wheelchair": "Wheelchair Accessible",
+    "search": "Search Routes",
+    "searching": "Searching for routes...",
+    "no_routes": "No routes found",
+    "route_found": "Route found",
+    "duration": "Duration",
+    "transfers": "Transfers",
+    "cost": "Cost",
+    "walk": "Walk",
+    "bus": "Bus",
+    "train": "Train",
+    "subway": "Subway",
+    "tram": "Tram"
+  },
+  "errors": {
+    "network": "Network connection error",
+    "server": "Server error",
+    "not_found": "Not found",
+    "permission": "Permission denied",
+    "timeout": "Request timeout"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  }
+}

@@ -4,10 +4,10 @@
  */
 
 import request from 'supertest';
-import { AuthService } from '../src/index.js';
-import { DatabaseService } from '../src/services/database.js';
-import { RedisService } from '../src/services/redis.js';
-import { createLogger } from '../../shared/utils/logger.js';
+import { AuthService } from '../src/index';
+import { DatabaseService } from '../src/services/database';
+import { RedisService } from '../src/services/redis';
+import { createLogger } from '../../shared/utils/logger';
 
 describe('Auth Service Integration Tests', () => {
   let app: any;

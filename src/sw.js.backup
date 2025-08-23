@@ -1,0 +1,17 @@
+// Minimal Service Worker - Temporarily disabled for debugging
+console.log('[SW] Minimal Service Worker loaded - debugging mode');
+
+self.addEventListener('install', event => {
+  console.log('[SW] Installing minimal service worker');
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  console.log('[SW] Activating minimal service worker');
+  event.waitUntil(self.clients.claim());
+});
+
+// Pass through all requests without caching
+self.addEventListener('fetch', event => {
+  // Do nothing - let all requests go through normally
+});

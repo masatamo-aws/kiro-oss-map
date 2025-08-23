@@ -21,7 +21,7 @@ export default {
   },
   
   // モジュール解決
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1'
   },
   
@@ -39,7 +39,7 @@ export default {
     '/coverage/'
   ],
   
-  // カバレッジ設定
+  // カバレッジ設定（v2.2.0品質向上）
   collectCoverage: true,
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -47,7 +47,9 @@ export default {
     '!src/**/__tests__/**',
     '!src/**/*.test.ts',
     '!src/**/*.spec.ts',
-    '!src/index.ts'
+    '!src/index.ts',
+    '!src/**/*.interface.ts',
+    '!src/**/*.type.ts'
   ],
   coverageDirectory: 'coverage',
   coverageReporters: [
@@ -55,14 +57,27 @@ export default {
     'text-summary',
     'html',
     'lcov',
-    'json'
+    'json',
+    'cobertura'
   ],
   coverageThreshold: {
     global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    },
+    './src/routes/': {
+      branches: 85,
+      functions: 85,
+      lines: 85,
+      statements: 85
+    },
+    './src/services/': {
+      branches: 75,
+      functions: 75,
+      lines: 75,
+      statements: 75
     }
   },
   
@@ -82,6 +97,30 @@ export default {
   
   // エラー時の詳細表示
   errorOnDeprecated: true,
+  
+  // v2.2.0品質向上設定
+  detectOpenHandles: true,
+  forceExit: true,
+  clearMocks: true,
+  restoreMocks: true,
+  resetMocks: true,
+  
+  // テストレポート
+  reporters: [
+    'default',
+    ['jest-html-reporters', {
+      publicPath: './coverage',
+      filename: 'test-report.html',
+      expand: true,
+      hideIcon: false,
+      pageTitle: 'Auth Service Test Report v2.2.0'
+    }],
+    ['jest-junit', {
+      outputDirectory: './coverage',
+      outputName: 'junit.xml',
+      suiteName: 'Auth Service Tests'
+    }]
+  ],
   
   // グローバル設定
   globals: {

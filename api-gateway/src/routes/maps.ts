@@ -6,6 +6,23 @@ import { Router, Request, Response } from 'express';
 import { asyncHandler, ValidationError } from '../middleware/errorHandler';
 import { requirePermission } from '../middleware/auth';
 
+// エラー処理ミドルウェア
+const handleAsyncError = (fn: Function) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+};
+
+// 共通エラーレスポンス
+const sendErrorResponse = (res: Response, statusCode: number, message: string, details?: any) => {
+  res.status(statusCode).json({
+    success: false,
+    error: message,
+    details,
+    timestamp: new Date().toISOString()
+  });
+};
+
 const router = Router();
 
 // Get available map styles

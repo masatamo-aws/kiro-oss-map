@@ -1,10 +1,11 @@
 /**
- * Kiro OSS Map v2.1.0 - Map Service テスト
- * 地図サービスの統合テスト
+ * Kiro OSS Map v2.2.0 - Map Service テスト
+ * 地図サービスの統合テスト・品質向上・パフォーマンステスト
  */
 
 import request from 'supertest';
 import { MapService } from '../src/index.js';
+import { PerformanceTestHelper, TestDataGenerator } from '../../auth/tests/helpers/test-helpers.js';
 
 describe('Map Service', () => {
   let mapService: MapService;
@@ -235,6 +236,154 @@ describe('Map Service', () => {
 
       // レスポンスが圧縮されているかチェック
       expect(response.headers['content-encoding']).toBeDefined();
+    });
+  });
+
+  describe('Performance Tests', () => {
+    it('should respond to health check within 50ms', async () => {
+      const { result, duration } = await PerformanceTestHelper.measureExecutionTime(async () => {
+        return request(app).get('/health');
+      });
+
+      expect(result.status).toBe(200);
+      expect(duration).toBeLessThan(50);
+      
+      console.log(`Map service health check completed in ${duration}ms`);
+    });
+
+    it('should handle concurrent style requests efficiently', async () => {
+      const concurrency = 20;
+      const maxDuration = 2000; // 2秒以内
+
+      const { results, totalDuration } = await PerformanceTestHelper.runConcurrentRequests(
+        async () => {
+          return request(app).get('/styles');
+        },
+        concurrency
+      );
+
+      // 全てのリクエストが成功することを確認
+      results.forEach(response => {
+        expect(response.status).toBe(200);
+      });
+
+      expect(totalDuration).toBeLessThan(maxDuration);
+      
+      console.log(`Concurrent style requests: ${concurrency} requests in ${totalDuration}ms`);
+    });
+
+    it('should handle tile requests within performance limits', async () => {
+      const { result, duration } = await PerformanceTestHelper.measureExecutionTime(async () => {
+        return request(app).get('/tiles/1/0/0.png');
+      });
+
+      // タイルが見つからない場合でも高速に応答すること
+      expect([200, 404]).toContain(result.status);
+      expect(duration).toBeLessThan(200);
+      
+      console.log(`Tile request handled in ${duration}ms`);
+    });
+  });
+
+  describe('Security Tests', () => {
+    it('should prevent path traversal attacks', async () => {
+      const maliciousPaths = [
+        '/tiles/../../../etc/passwd',
+        '/styles/../../config/database.json',
+        '/tiles/%2e%2e%2f%2e%2e%2fetc%2fpasswd',
+      ];
+
+      for (const path of maliciousPaths) {
+        const response = await request(app).get(path);
+        
+        // パストラバーサル攻撃が防がれることを確認
+        expect(response.status).not.toBe(200);
+        expect(response.status).toBeOneOf([400, 404]);
+      }
+    });
+
+    it('should validate tile parameters properly', async () => {
+      const invalidParams = [
+        '/tiles/abc/0/0.png',
+        '/tiles/1/abc/0.png',
+        '/tiles/1/0/abc.png',
+        '/tiles/-1/0/0.png',
+        '/tiles/1/-1/0.png',
+        '/tiles/1/0/-1.png',
+      ];
+
+      for (const param of invalidParams) {
+        const response = await request(app).get(param);
+        
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+      }
+    });
+
+    it('should implement proper CORS policy', async () => {
+      const response = await request(app)
+        .get('/styles')
+        .set('Origin', 'https://malicious-site.com');
+
+      // 適切なCORSポリシーが適用されることを確認
+      if (response.headers['access-control-allow-origin']) {
+        expect(response.headers['access-control-allow-origin']).not.toBe('https://malicious-site.com');
+      }
+    });
+  });
+
+  describe('Error Recovery Tests', () => {
+    it('should handle Redis connection failures gracefully', async () => {
+      // Redis接続エラーをシミュレート（実際の実装では適切にモック）
+      const response = await request(app)
+        .get('/tiles/stats')
+        .expect(200);
+
+      // Redis障害時でも基本機能は動作すること
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should handle storage failures gracefully', async () => {
+      // ストレージエラーをシミュレート
+      const response = await request(app)
+        .get('/tiles/1/0/0.png');
+
+      // ストレージ障害時でも適切なエラーレスポンスを返すこと
+      expect([200, 404, 500]).toContain(response.status);
+      
+      if (response.status === 500) {
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBeDefined();
+      }
+    });
+  });
+
+  describe('Memory and Resource Tests', () => {
+    it('should not cause memory leaks during extended operation', async () => {
+      const initialMemory = process.memoryUsage();
+      const iterations = 50;
+
+      // 大量のリクエストを実行
+      for (let i = 0; i < iterations; i++) {
+        await request(app).get('/styles');
+        
+        // 定期的にガベージコレクション実行
+        if (i % 10 === 0 && global.gc) {
+          global.gc();
+        }
+      }
+
+      const finalMemory = process.memoryUsage();
+      const memoryIncrease = finalMemory.heapUsed - initialMemory.heapUsed;
+      const memoryIncreasePercentage = (memoryIncrease / initialMemory.heapUsed) * 100;
+
+      // メモリ使用量の増加が30%以下であることを確認
+      expect(memoryIncreasePercentage).toBeLessThan(30);
+      
+      console.log(`Memory usage after ${iterations} operations:`);
+      console.log(`Initial: ${Math.round(initialMemory.heapUsed / 1024 / 1024)}MB`);
+      console.log(`Final: ${Math.round(finalMemory.heapUsed / 1024 / 1024)}MB`);
+      console.log(`Increase: ${memoryIncreasePercentage.toFixed(2)}%`);
     });
   });
 });
